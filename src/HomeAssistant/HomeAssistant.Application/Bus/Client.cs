@@ -1,12 +1,15 @@
 ﻿using HomeAssistant.Application.Bus.Models;
+using HomeAssistant.Application.Bus.Strategies;
 using HomeAssistant.Common;
 using HomeAssistant.Common.Extensions;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.WebSockets;
+using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -18,10 +21,12 @@ namespace HomeAssistant.Application.Bus
         private string _url;
         private string _accessToken;
         private ClientWebSocket _webSocket;
-        private readonly EventHandler _handler;
+        private List<BaseStrategy> _strategies;
+        private readonly IServiceProvider _serviceProvider;
+        private readonly EventStrategy _eventStrategy;
 
         public Client(
-            EventHandler handler
+            IServiceProvider serviceProvider
             , IOptions<AppSettings> options
         )
         {
@@ -29,7 +34,9 @@ namespace HomeAssistant.Application.Bus
             _url = "ws://192.168.5.6:8123/api/websocket";
             _accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI4ZTkzYTkyMzQ1Mjk0ZGM4YjE3Mjg5NWU2M2YwMTRiMiIsImlhdCI6MTY3NzE2MzQyMCwiZXhwIjoxOTkyNTIzNDIwfQ.EzSYYZajag1NOOZ4azEzi-TJSnDLFtOlYPuF7TCZ4AQ";
             _webSocket = new ClientWebSocket();
-            _handler = handler;
+            _serviceProvider = serviceProvider;
+
+            LoadStrategies();
         }
 
         public async Task Start(CancellationToken cancellationToken)
@@ -43,6 +50,23 @@ namespace HomeAssistant.Application.Bus
         {
             await _webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, null, CancellationToken.None);
             _webSocket.Dispose();
+        }
+
+        private async Task Listen(CancellationToken cancellationToken)
+        {
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                var content = await ReceiveAsync();
+                if (!string.IsNullOrWhiteSpace(content))
+                {
+                    var message = JsonSerializer.Deserialize<Message>(content);
+                    var strategy = _strategies.FirstOrDefault(x => x.Type == message.Type);
+                    if (strategy is object)
+                    {
+                        await strategy.Execute(content);
+                    }
+                }
+            }
         }
 
         private async Task Authorize()
@@ -84,46 +108,30 @@ namespace HomeAssistant.Application.Bus
             await _webSocket.SendAsync(message.Serialize().ToBytes(), WebSocketMessageType.Text, WebSocketMessageFlags.EndOfMessage, CancellationToken.None);
         }
 
-        private async Task Listen(CancellationToken cancellationToken)
-        {
-            while (!cancellationToken.IsCancellationRequested)
-            {
-                var message = await ReceiveAsync();
-                if (message.HasValue)
-                {
-                    if (message.Value.Item1 == Constants.StateChangedEventId)
-                    {
-                        var eventMessage = JsonSerializer.Deserialize<Event>(message.Value.Item2);
-                        if (!string.IsNullOrWhiteSpace(eventMessage.Payload?.ToString()))
-                        {
-                            var eventToPublish = JsonSerializer.Deserialize<StateChangedEvent>(eventMessage.Payload.ToString());
-                            await _handler.HandleStateChanged(eventToPublish);
-                        }
-                    }
-                }
-            }
-        }
-
-        private async Task<(int, string)?> ReceiveAsync()
+        private async Task<string> ReceiveAsync()
         {
             var buffer = new byte[8192];
             var result = await _webSocket.ReceiveAsync(buffer, CancellationToken.None);
-            var json = Encoding.ASCII.GetString(buffer, 0, result.Count);
-
-            if (string.IsNullOrWhiteSpace(json))
-                return null;
-
-            var message = JsonSerializer.Deserialize<Message>(json);
-            return (message.Id, json);
+            var content = Encoding.ASCII.GetString(buffer, 0, result.Count);
+            return content;
         }
 
         private async Task<TE> ReceiveAsync<TE>()
         {
             var buffer = new byte[8192];
             var result = await _webSocket.ReceiveAsync(buffer, CancellationToken.None);
-            var json = Encoding.ASCII.GetString(buffer, 0, result.Count);
+            var content = Encoding.ASCII.GetString(buffer, 0, result.Count);
 
-            return string.IsNullOrWhiteSpace(json) ? default : JsonSerializer.Deserialize<TE>(json);
+            return string.IsNullOrWhiteSpace(content) ? default : JsonSerializer.Deserialize<TE>(content);
+        }
+
+        private void LoadStrategies()
+        {
+            _strategies = typeof(BaseStrategy)
+                .Assembly.GetTypes()
+                .Where(t => t.IsSubclassOf(typeof(BaseStrategy)) && !t.IsAbstract)
+                .Select(t => (BaseStrategy)_serviceProvider.GetRequiredService(t))
+                .ToList();
         }
     }
 }

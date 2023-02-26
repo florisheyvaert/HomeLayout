@@ -1,4 +1,5 @@
 ﻿using HomeAssistant.Application.Bus;
+using HomeAssistant.Application.Bus.Strategies;
 using HomeAssistant.Common;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,7 +19,7 @@ namespace HomeAssistant.Application
 
             services.AddHostedService<HostedBackgroundService>();
             services.AddSingleton<Client>();
-            services.AddTransient<Bus.EventHandler>();
+            services.AddTransient<EventStrategy>();
 
             return services;
         }
