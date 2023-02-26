@@ -1,6 +1,7 @@
 ﻿using HomeAssistant.Application.Bus.Models;
 using HomeAssistant.Common;
 using HomeAssistant.Common.Extensions;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -17,10 +18,14 @@ namespace HomeAssistant.Application.Bus
         private string _url;
         private string _accessToken;
         private ClientWebSocket _webSocket;
-        private readonly Handler _handler;
+        private readonly EventHandler _handler;
 
-        public Client(Handler handler)
+        public Client(
+            EventHandler handler
+            , IOptions<AppSettings> options
+        )
         {
+            // todo bind to options
             _url = "ws://192.168.5.6:8123/api/websocket";
             _accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI4ZTkzYTkyMzQ1Mjk0ZGM4YjE3Mjg5NWU2M2YwMTRiMiIsImlhdCI6MTY3NzE2MzQyMCwiZXhwIjoxOTkyNTIzNDIwfQ.EzSYYZajag1NOOZ4azEzi-TJSnDLFtOlYPuF7TCZ4AQ";
             _webSocket = new ClientWebSocket();

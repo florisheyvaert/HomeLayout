@@ -10,12 +10,12 @@ using System.Threading.Tasks;
 
 namespace HomeAssistant.Application.Bus
 {
-    public class Handler
+    public class EventHandler
     {
         private readonly IMapper _mapper;
         private readonly IBroker _broker;
 
-        public Handler(
+        public EventHandler(
             IMapper mapper
             , IBroker broker
         )

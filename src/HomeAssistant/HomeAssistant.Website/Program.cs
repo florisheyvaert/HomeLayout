@@ -1,10 +1,16 @@
 using HomeAssistant.Application;
+using Microsoft.Extensions.Configuration;
 
 internal class Program
 {
     private static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
+
+        //var configBuilder = new ConfigurationBuilder()
+        //    .AddJsonFile("appsettings.json")
+        //    .AddJsonFile("appsettings.Development.json");
+        //var config = configBuilder.Build();
 
         // Add services to the container.
         builder.Services.AddRazorPages();
