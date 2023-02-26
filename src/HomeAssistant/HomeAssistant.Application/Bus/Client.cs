@@ -52,6 +52,11 @@ namespace HomeAssistant.Application.Bus
             _webSocket.Dispose();
         }
 
+        public async Task Send(object obj)
+        {
+            await _webSocket.SendAsync(obj.Serialize().ToBytes(), WebSocketMessageType.Text, WebSocketMessageFlags.EndOfMessage, CancellationToken.None);
+        }
+
         private async Task Listen(CancellationToken cancellationToken)
         {
             while (!cancellationToken.IsCancellationRequested)
@@ -113,6 +118,10 @@ namespace HomeAssistant.Application.Bus
             var buffer = new byte[8192];
             var result = await _webSocket.ReceiveAsync(buffer, CancellationToken.None);
             var content = Encoding.ASCII.GetString(buffer, 0, result.Count);
+
+            // move to loglevel
+            await Console.Out.WriteLineAsync(content);
+
             return content;
         }
 
