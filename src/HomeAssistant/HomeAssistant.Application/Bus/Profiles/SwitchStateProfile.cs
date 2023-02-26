@@ -9,15 +9,14 @@ using System.Threading.Tasks;
 
 namespace HomeAssistant.Application.Bus.Profiles
 {
-    internal class LightStateProfile : BaseProfile
+    internal class SwitchStateProfile : BaseProfile
     {
-        public LightStateProfile()
+        public SwitchStateProfile()
         {
-            CreateMap<State, LightState>()
+            CreateMap<State, SwitchState>()
                 .ForMember(x => x.EntityId, o => o.MapFrom(y => y.EntityId))
                 .ForMember(x => x.ChangedAt, o => o.MapFrom(y => y.LastChanged))
                 .ForMember(x => x.Value, o => o.MapFrom(y => y.Value))
-                .ForMember(x => x.Brightness, o => o.MapFrom(y => GetDecimal(y.Attributes.FirstOrDefault(x => x.Key == "brightness"))))
                 .ForMember(x => x.FriendlyName, o => o.MapFrom(y => GetString(y.Attributes.FirstOrDefault(x => x.Key == "friendly_name"))));
         }
     }

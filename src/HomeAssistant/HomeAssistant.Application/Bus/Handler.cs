@@ -32,10 +32,11 @@ namespace HomeAssistant.Application.Bus
                 var oldState = _mapper.Map(eventToPublish.Data.OldState, typeof(State), type.GenericTypeArguments.First());
                 var newState = _mapper.Map(eventToPublish.Data.NewState, typeof(State), type.GenericTypeArguments.First());
 
+                // maybe without dynamic if possible?
                 var stateChangedEvent = (dynamic)Activator.CreateInstance(type);
                 stateChangedEvent.EntityId = eventToPublish.Data.EntityId;
-                stateChangedEvent.NewState = (dynamic)oldState;
-                stateChangedEvent.OldState = oldState;
+                stateChangedEvent.NewState = (dynamic)newState;
+                stateChangedEvent.OldState = (dynamic)oldState;
 
                 await _broker.Publish(stateChangedEvent);
             }

@@ -83,11 +83,12 @@ namespace HomeAssistant.Application.Bus
         {
             while (!cancellationToken.IsCancellationRequested)
             {
-                var eventMessage = await ReceiveAsync<Event>();
-                if (eventMessage is not null)
+                var message = await ReceiveAsync();
+                if (message.HasValue)
                 {
-                    if (eventMessage.Id == Constants.StateChangedEventId)
+                    if (message.Value.Item1 == Constants.StateChangedEventId)
                     {
+                        var eventMessage = JsonSerializer.Deserialize<Event>(message.Value.Item2);
                         if (!string.IsNullOrWhiteSpace(eventMessage.Payload?.ToString()))
                         {
                             var eventToPublish = JsonSerializer.Deserialize<StateChangedEvent>(eventMessage.Payload.ToString());
@@ -96,6 +97,19 @@ namespace HomeAssistant.Application.Bus
                     }
                 }
             }
+        }
+
+        private async Task<(int, string)?> ReceiveAsync()
+        {
+            var buffer = new byte[8192];
+            var result = await _webSocket.ReceiveAsync(buffer, CancellationToken.None);
+            var json = Encoding.ASCII.GetString(buffer, 0, result.Count);
+
+            if (string.IsNullOrWhiteSpace(json))
+                return null;
+
+            var message = JsonSerializer.Deserialize<Message>(json);
+            return (message.Id, json);
         }
 
         private async Task<TE> ReceiveAsync<TE>()
