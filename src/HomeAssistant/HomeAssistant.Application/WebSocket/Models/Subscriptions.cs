@@ -6,9 +6,9 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace HomeAssistant.Application.Bus.Models
+namespace HomeAssistant.Application.WebSocket.Models
 {
-    public class SubscribeStateChanged
+    internal class StateChangedSubscription
     {
         [JsonPropertyName("type")]
         public string Type { get; set; }
@@ -19,11 +19,11 @@ namespace HomeAssistant.Application.Bus.Models
         [JsonPropertyName("event_type")]
         public string EventType { get; set; }
 
-        public SubscribeStateChanged()
+        public StateChangedSubscription()
         {
             Type = "subscribe_events";
             EventType = "state_changed";
-            Id = Constants.StateChangedEventId;
+            Id = IdGenerator.Id;
         }
     }
 }

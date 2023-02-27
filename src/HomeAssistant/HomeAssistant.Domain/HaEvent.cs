@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HomeAssistant.Application.Bus
+namespace HomeAssistant.Domain
 {
-    internal class Caller
+    public class HaEvent
     {
     }
 }

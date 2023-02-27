@@ -10,15 +10,34 @@ namespace HomeAssistant.Website.Pages
 
         protected override async Task OnInitializedAsync()
         {
-            await Test();
         }
 
-        private async Task Test()
+        private async Task On()
         {
             var state = new LightState()
             {
                 EntityId = "light.toilet_beneden",
-                Brightness = 10
+                State = BasicState.On
+            };
+            await HaService.SetLightState(state.TurnOn());
+        }
+
+        private async Task Off()
+        {
+            var state = new LightState()
+            {
+                EntityId = "light.toilet_beneden",
+                State = BasicState.Off
+            };
+            await HaService.SetLightState(state);
+        }
+
+        private async Task Random()
+        {
+            var state = new LightState()
+            {
+                EntityId = "light.toilet_beneden",
+                Brightness = new Random().Next(100)
             };
             await HaService.SetLightState(state);
         }

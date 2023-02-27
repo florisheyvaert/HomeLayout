@@ -4,10 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HomeAssistant.Common
+namespace HomeAssistant.Domain.States
 {
-    public class Constants
+    public class CoverState : BaseState
     {
-        public const int StateChangedEventId = 1;
+        public decimal Position { get; set; }
     }
 }

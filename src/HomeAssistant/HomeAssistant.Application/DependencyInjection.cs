@@ -1,5 +1,6 @@
-﻿using HomeAssistant.Application.Bus;
-using HomeAssistant.Application.Bus.Strategies;
+﻿using HomeAssistant.Application.BackgroundServices;
+using HomeAssistant.Application.Commands;
+using HomeAssistant.Application.WebSocket;
 using HomeAssistant.Common;
 using HomeAssistant.Common.Interfaces;
 using Microsoft.Extensions.Configuration;
@@ -18,10 +19,11 @@ namespace HomeAssistant.Application
             services.AddObservr();
             services.Configure<AppSettings>(o => configuration.GetSection("AppSettings"));
 
-            services.AddHostedService<HostedBackgroundService>();
-            services.AddSingleton<Client>();
-            services.AddTransient<EventStrategy>();
-            services.AddTransient<IHaService, HaService>();
+            services.AddSingleton<IHaBus, WebSocketBus>();
+            services.AddHostedService<EventPublisher>();
+            services.AddTransient<IHaService, CommandHandler>();
+
+            //services.AddTransient<EventStrategy>();
 
             return services;
         }

@@ -5,7 +5,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace HomeAssistant.Application.Bus.Models
+namespace HomeAssistant.Application.WebSocket.Models
 {
     internal class Command
     {
@@ -19,7 +19,7 @@ namespace HomeAssistant.Application.Bus.Models
         public string Domain { get; set; }
 
         [JsonPropertyName("service")]
-        public string Service{ get; set; }
+        public string Service { get; set; }
 
         [JsonPropertyName("service_data")]
         public object ServiceData { get; set; }

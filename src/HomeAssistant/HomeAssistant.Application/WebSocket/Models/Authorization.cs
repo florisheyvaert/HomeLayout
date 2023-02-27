@@ -5,9 +5,9 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace HomeAssistant.Application.Bus.Models
+namespace HomeAssistant.Application.WebSocket.Models
 {
-    public class AuthorizationRequest
+    internal class AuthorizationRequest
     {
         [JsonPropertyName("type")]
         public string Type { get; set; }
@@ -20,5 +20,14 @@ namespace HomeAssistant.Application.Bus.Models
             AccessToken = accessToken;
             Type = "auth";
         }
+    }
+
+    internal class AuthorizationResponse
+    {
+        [JsonPropertyName("type")]
+        public string Type { get; set; }
+
+        [JsonPropertyName("message")]
+        public string Message { get; set; }
     }
 }
