@@ -1,4 +1,5 @@
-﻿using HomeAssistant.Common.Interfaces;
+﻿using AutoMapper;
+using HomeAssistant.Common.Interfaces;
 using HomeAssistant.Domain;
 using HomeAssistant.Domain.States;
 using System;
@@ -12,28 +13,20 @@ namespace HomeAssistant.Application.Commands
     internal class CommandHandler : IHaService
     {
         private readonly IHaBus _bus;
+        private readonly IMapper _mapper;
 
-        public CommandHandler(IHaBus bus)
+        public CommandHandler(
+            IHaBus bus,
+            IMapper mapper
+        )
         {
             _bus = bus;
+            _mapper = mapper;
         }
 
-        public async Task SetLightState(LightState lightState)
+        public async Task SetState<TE>(TE state) where TE : BaseState
         {
-            var command = new HaCommand
-            {
-                EntityId = lightState.EntityId,
-                Domain = CommandDomain.Light,
-                Data = new()
-                {
-                    { "brightness", lightState.Brightness * (decimal)2.56 }
-                },
-                Service = lightState.State == BasicState.On ? CommandService.TurnOn : CommandService.TurnOff
-            };
-
-            if (command.Service == CommandService.TurnOff)
-                command.Data = new();
-
+            var command = _mapper.Map<HaCommand>(state);
             await _bus.Send(command);
         }
     }

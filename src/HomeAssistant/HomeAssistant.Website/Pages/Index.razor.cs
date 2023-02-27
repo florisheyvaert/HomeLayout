@@ -14,32 +14,32 @@ namespace HomeAssistant.Website.Pages
 
         private async Task On()
         {
-            var state = new LightState()
+            var state = new CoverState()
             {
-                EntityId = "light.toilet_beneden",
-                State = BasicState.On
+                EntityId = "cover.bureau",
+                State = BasicState.Down
             };
-            await HaService.SetLightState(state.TurnOn());
+            await HaService.SetState(state);
         }
 
         private async Task Off()
         {
-            var state = new LightState()
+            var state = new CoverState()
             {
-                EntityId = "light.toilet_beneden",
-                State = BasicState.Off
+                EntityId = "cover.bureau",
+                State = BasicState.Up
             };
-            await HaService.SetLightState(state);
+            await HaService.SetState(state);
         }
 
         private async Task Random()
         {
-            var state = new LightState()
+            var state = new CoverState()
             {
-                EntityId = "light.toilet_beneden",
-                Brightness = new Random().Next(100)
+                EntityId = "cover.bureau",
+                Position = 50
             };
-            await HaService.SetLightState(state);
+            await HaService.SetState(state);
         }
     }
 }

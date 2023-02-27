@@ -16,11 +16,11 @@ namespace HomeAssistant.Domain
 
     public enum CommandDomain
     {
-        Light
+        Light, Switch, Cover, Climate
     }
 
     public enum CommandService
     {
-        TurnOn, TurnOff
+        TurnOn, TurnOff, OpenCover, CloseCover, StopCover, SetCoverPosition, SetHvacMode, SetTemperature
     }
 }

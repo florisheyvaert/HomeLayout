@@ -9,6 +9,6 @@ namespace HomeAssistant.Common.Interfaces
 {
     public interface IHaService
     {
-        Task SetLightState(LightState lightState);
+        Task SetState<TE>(TE state) where TE : BaseState;
     }
 }
