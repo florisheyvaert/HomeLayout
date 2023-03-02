@@ -11,6 +11,10 @@ namespace HomeAssistant.Domain.States
     {
         public decimal Brightness { get; set; }
 
+        public LightState(BaseState baseState) : base(baseState)
+        {
+        }
+
         public LightState TurnOn()
         {
             Brightness = 100;

@@ -1,5 +1,5 @@
-﻿using HomeAssistant.Application.BackgroundServices;
-using HomeAssistant.Application.Commands;
+﻿using HomeAssistant.Application.Commands;
+using HomeAssistant.Application.Messages;
 using HomeAssistant.Application.WebSocket;
 using HomeAssistant.Common;
 using HomeAssistant.Common.Interfaces;
@@ -22,6 +22,7 @@ namespace HomeAssistant.Application
             services.AddSingleton<IHaBus, WebSocketBus>();
             services.AddHostedService<EventPublisher>();
             services.AddTransient<IHaService, CommandHandler>();
+            services.AddTransient<MessageHandler>();
 
             //services.AddTransient<EventStrategy>();
 

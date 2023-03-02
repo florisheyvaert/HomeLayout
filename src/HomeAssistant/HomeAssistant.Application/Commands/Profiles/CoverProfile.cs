@@ -32,7 +32,7 @@ namespace HomeAssistant.Application.Commands.Profiles
             if (state.Position != 0)
                 return CommandService.SetCoverPosition;
             else
-                return state.State == BasicState.Up ? CommandService.OpenCover : CommandService.CloseCover;
+                return state.State == BasicState.On ? CommandService.OpenCover : CommandService.CloseCover;
         }
     }
 }

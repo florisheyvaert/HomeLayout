@@ -1,7 +1,9 @@
-﻿using HomeAssistant.Application.WebSocket.Models;
+﻿using AutoMapper;
+using HomeAssistant.Application.WebSocket.Models;
 using HomeAssistant.Common.Extensions;
 using HomeAssistant.Common.Interfaces;
 using HomeAssistant.Domain;
+using HomeAssistant.Domain.States;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -18,19 +20,31 @@ namespace HomeAssistant.Application.WebSocket
         private ClientWebSocket _webSocket;
         private string _url;
         private string _accessToken;
+        private readonly IMapper _mapper;
 
-        public WebSocketBus()
+        public WebSocketBus(IMapper mapper)
         {
             _url = "ws://192.168.5.6:8123/api/websocket";
             _accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI4ZTkzYTkyMzQ1Mjk0ZGM4YjE3Mjg5NWU2M2YwMTRiMiIsImlhdCI6MTY3NzE2MzQyMCwiZXhwIjoxOTkyNTIzNDIwfQ.EzSYYZajag1NOOZ4azEzi-TJSnDLFtOlYPuF7TCZ4AQ";
+            _mapper = mapper;
         }
 
-        public async Task<HaEvent> Receive()
+        public async Task<HaMessage> Receive()
         {
             await Initialize();
-            var message = await ReceiveAsync();
-            // map
-            return new();
+            var message = await ReceiveAsync<Message>();
+
+            var mapped = _mapper.Map<HaMessage>(message);
+
+            if (message.Type == MessageType.Event)
+            {
+                if (message.Event.EventType == "state_changed")
+                {
+                    mapped = _mapper.Map<HaStateChangedMessage>(message);
+                }
+            }
+
+            return mapped;
         }
 
         public async Task Send(HaCommand command)

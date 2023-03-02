@@ -10,6 +10,6 @@ namespace HomeAssistant.Common.Interfaces
     public interface IHaBus : IAsyncDisposable
     {
         Task Send(HaCommand command);
-        Task<HaEvent> Receive();
+        Task<HaMessage> Receive();
     }
 }

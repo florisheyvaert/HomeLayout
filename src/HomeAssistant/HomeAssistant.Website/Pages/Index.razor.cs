@@ -1,15 +1,33 @@
 ﻿using HomeAssistant.Common.Interfaces;
+using HomeAssistant.Domain;
 using HomeAssistant.Domain.States;
 using Microsoft.AspNetCore.Components;
+using Observr;
+using System.Security.Cryptography.Xml;
 
 namespace HomeAssistant.Website.Pages
 {
-    public partial class Index
+    public partial class Index : Observr.IObserver<HaStateChangedMessage>
     {
+        private IDisposable _subscription;
+
         [Inject] public IHaService HaService { get; set; }
+
+        [Inject] public IBroker Broker { get; set; }
+
+        public LightState Light { get; set; }
 
         protected override async Task OnInitializedAsync()
         {
+            _subscription = Broker.Subscribe(this);
+        }
+
+        public async Task Handle(HaStateChangedMessage value, CancellationToken cancellationToken)
+        {
+            if (value.EntityId == "light.toilet_beneden")
+            {
+                Light = new(value.NewState);
+            }
         }
 
         private async Task On()
@@ -17,7 +35,7 @@ namespace HomeAssistant.Website.Pages
             var state = new CoverState()
             {
                 EntityId = "cover.bureau",
-                State = BasicState.Down
+                State = BasicState.Off
             };
             await HaService.SetState(state);
         }
@@ -27,7 +45,7 @@ namespace HomeAssistant.Website.Pages
             var state = new CoverState()
             {
                 EntityId = "cover.bureau",
-                State = BasicState.Up
+                State = BasicState.On
             };
             await HaService.SetState(state);
         }

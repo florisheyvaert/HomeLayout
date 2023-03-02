@@ -1,4 +1,5 @@
 ﻿using HomeAssistant.Common.Interfaces;
+using HomeAssistant.Domain;
 using Microsoft.Extensions.Hosting;
 using Observr;
 using System;
@@ -7,20 +8,20 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HomeAssistant.Application.BackgroundServices
+namespace HomeAssistant.Application.Messages
 {
     internal class EventPublisher : BackgroundService
     {
         private readonly IHaBus _bus;
-        private readonly IBroker _broker;
+        private readonly MessageHandler _messageHandler;
 
         public EventPublisher(
             IHaBus bus
-            , IBroker broker
+            , MessageHandler messageHandler
         )
         {
             _bus = bus;
-            _broker = broker;
+            _messageHandler = messageHandler;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -28,7 +29,7 @@ namespace HomeAssistant.Application.BackgroundServices
             while (!stoppingToken.IsCancellationRequested)
             {
                 var message = await _bus.Receive();
-                await _broker.Publish(message);
+                await _messageHandler.Handle(message);
             }
         }
 
