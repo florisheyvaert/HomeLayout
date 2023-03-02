@@ -10,22 +10,38 @@ namespace HomeAssistant.Domain.States
     {
         public string EntityId { get; set; }
 
-        public string FriendlyName { get; set; }
-
         public BasicState State { get; set; }
 
         public Dictionary<string, object> Attributes { get; set; }
 
+        public string FriendlyName { get => GetAttribute("friendly_name"); }
+
         public BaseState(BaseState baseState)
         {
             EntityId = baseState.EntityId;
-            FriendlyName = baseState.FriendlyName;      
             Attributes = baseState.Attributes;
         }
 
         public BaseState()
         {
-            
+
+        }
+
+        protected string GetAttribute(string key)
+        {
+            if (Attributes is object && Attributes.TryGetValue(key, out var value))
+                return value?.ToString() ?? string.Empty;
+            else
+                return string.Empty;
+        }
+
+        protected decimal GetAttributeDecimal(string key)
+        {
+            var attribute = GetAttribute(key);
+            if (decimal.TryParse(attribute, out var result))
+                return result;
+
+            return 0;
         }
     }
 

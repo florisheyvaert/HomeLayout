@@ -15,7 +15,7 @@ namespace HomeAssistant.Website.Pages
 
         [Inject] public IBroker Broker { get; set; }
 
-        public LightState Light { get; set; }
+        public LightState Light { get; set; } = new();
 
         protected override async Task OnInitializedAsync()
         {
@@ -27,6 +27,7 @@ namespace HomeAssistant.Website.Pages
             if (value.EntityId == "light.toilet_beneden")
             {
                 Light = new(value.NewState);
+                await InvokeAsync(StateHasChanged);
             }
         }
 
