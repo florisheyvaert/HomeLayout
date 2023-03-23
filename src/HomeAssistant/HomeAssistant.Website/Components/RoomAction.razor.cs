@@ -14,6 +14,6 @@ namespace HomeAssistant.Website.Components
         [Parameter] public string Unit { get; set; }
 
         public string ValueWithUnit { get => $"{Value} {(Value is object ? Unit : string.Empty)}"; }
-        public string IsActive { get => State.ToString() == "On" ? "active" : string.Empty; }
+        public string IsActive { get => State?.ToString() == "On" ? "active" : string.Empty; }
     }
 }
