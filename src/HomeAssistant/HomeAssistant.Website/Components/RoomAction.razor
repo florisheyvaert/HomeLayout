@@ -1,8 +1,10 @@
-﻿<div class="me-3 p-1 d-flex room-action justify-content-around @IsActive">
+﻿@inherits RoomActioBase
+
+<div class="me-3 p-1 d-flex room-action justify-content-around @IsActive">
     <Icon Name="@Icon" Size="2rem" CssClass="p-1" CssStyle="margin: auto 0;" />
 
     <div class="state p-1 d-flex flex-column justify-content-center">
         <span class="fw-bold fs-6">@State</span>
-        <span style="font-size: .7rem">@Value</span>
+        <span style="font-size: .7rem">@ValueWithUnit</span>
     </div>
 </div>

@@ -15,8 +15,8 @@ namespace HomeAssistant.Application.WebSocket.Profiles
         {
             CreateMap<State, BaseState>()
                 .ForMember(x => x.EntityId, o => o.MapFrom(y => y.EntityId))
-                .ForMember(x => x.Attributes, o => o.MapFrom(y => y.Attributes));
-                    //.ForMember(x => x.State, o => o.MapFrom(y => y.Value))
+                .ForMember(x => x.Attributes, o => o.MapFrom(y => y.Attributes))
+                .ForMember(x => x.State, o => o.MapFrom(y => y.Value == "off" ? BasicState.Off : BasicState.On));
         }
     }
 }
