@@ -1,13 +1,17 @@
 ﻿@using System.Reflection;
 
-<div style="color: @Color">
+<div class="icon @CssClass" style="color: @Color; @CssStyle">
     @((MarkupString)_content)
 </div>
 
 @code {
+    // iconpack: https://lucide.dev/icon/bell?search=temp
+
     [Parameter] public string Name { get; set; }
     [Parameter] public string Size { get; set; } = "2rem";
     [Parameter] public string Color { get; set; }
+    [Parameter] public string CssStyle { get; set; }
+    [Parameter] public string CssClass { get; set; }
 
     private string _content;
 

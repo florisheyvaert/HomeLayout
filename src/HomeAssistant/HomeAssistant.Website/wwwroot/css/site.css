@@ -13,7 +13,7 @@
     --primary-color-700: rgba(var(--primary-color-code), 0.7);
     --primary-color-800: rgba(var(--primary-color-code), 0.8);
     --primary-color-900: rgba(var(--primary-color-code), 0.9);
-    --primary-font-color: rgba(255, 255, 255);
+    --primary-font-color: rgba(230, 230, 230);
     --primary-font-color-900: rgba(255, 255, 255);
     --accent-color: rgba(var(--accent-color-code), 1);
     --accent-color-100: rgba(var(--accent-color-code), 0.1);
@@ -33,7 +33,7 @@ html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
-p {
+p, h1, h2, h3, h4, h5 {
     margin: 0;
 }
 
@@ -41,6 +41,18 @@ p {
     background: url('../images/background_1.png');
     background-size: cover;
 }
+
+button {
+    border-radius: .5rem;
+    border: 2px solid var(--primary-color);
+    background: var(--primary-color-500);
+    box-shadow: none;
+    color: var(--primary-font-color);
+}
+
+    button:hover {
+        background: var(--primary-color);
+    }
 
 a.selected .toolbar-item {
     opacity: 1;
@@ -55,3 +67,4 @@ a.selected .toolbar-item {
 .toolbar-item {
     opacity: .5;
 }
+
