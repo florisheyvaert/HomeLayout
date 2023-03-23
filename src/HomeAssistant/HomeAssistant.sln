@@ -3,17 +3,17 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.33414.496
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HomeAssistant.Website", "HomeAssistant.Website\HomeAssistant.Website.csproj", "{F31C05BC-3562-41DC-A7BD-43BE59DC0E69}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HomeAssistant.Website", "HomeAssistant.Website\HomeAssistant.Website.csproj", "{F31C05BC-3562-41DC-A7BD-43BE59DC0E69}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HomeAssistant.Application", "HomeAssistant.Application\HomeAssistant.Application.csproj", "{A99EA419-122D-4035-98C0-0AF13534C497}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HomeAssistant.Application", "HomeAssistant.Application\HomeAssistant.Application.csproj", "{A99EA419-122D-4035-98C0-0AF13534C497}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Core", "Core", "{D5020FBA-492A-4407-AEF0-06D488162A9B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Views", "Views", "{E5B2DC64-93E5-44AC-9DAB-3E6A33150C09}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HomeAssistant.Domain", "HomeAssistant.Domain\HomeAssistant.Domain.csproj", "{AE97CD40-3972-4DC2-BC4B-A3CC9F736952}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HomeAssistant.Domain", "HomeAssistant.Domain\HomeAssistant.Domain.csproj", "{AE97CD40-3972-4DC2-BC4B-A3CC9F736952}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HomeAssistant.Common", "HomeAssistant.Common\HomeAssistant.Common.csproj", "{DD86B75A-A6F4-48BF-B5C1-4B775951E2FF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HomeAssistant.Common", "HomeAssistant.Common\HomeAssistant.Common.csproj", "{DD86B75A-A6F4-48BF-B5C1-4B775951E2FF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

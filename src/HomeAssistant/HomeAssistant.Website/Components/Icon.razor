@@ -1,0 +1,22 @@
+﻿@using System.Reflection;
+
+<div style="color: @Color">
+    @((MarkupString)_content)
+</div>
+
+@code {
+    [Parameter] public string Name { get; set; }
+    [Parameter] public string Size { get; set; } = "2rem";
+    [Parameter] public string Color { get; set; }
+
+    private string _content;
+
+    protected override Task OnInitializedAsync()
+    {
+        var path = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+        _content = File.ReadAllText($"{path}/wwwroot/images/icons/{Name}.svg");
+        _content = _content.Replace("width=\"24\"", $"width=\"{Size}\"");
+        _content = _content.Replace("height=\"24\"", $"height=\"{Size}\"");
+        return base.OnInitializedAsync();
+    }
+}

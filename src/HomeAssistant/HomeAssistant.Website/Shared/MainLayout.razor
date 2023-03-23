@@ -1,19 +1,13 @@
 ﻿@inherits LayoutComponentBase
 
-<PageTitle>HomeAssistant.Website</PageTitle>
+<PageTitle>Assistant to the Home</PageTitle>
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
+<Toolbar Height="@ToolbarHeight" />
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://docs.microsoft.com/aspnet/" target="_blank">About</a>
-        </div>
-
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
+<div class="main" style="min-height: calc(100vh - @ToolbarHeight); overflow: auto;">
+    @Body
 </div>
+
+@code {
+    private string ToolbarHeight = "3.5rem";
+}
