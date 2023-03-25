@@ -19,12 +19,16 @@ namespace HomeAssistant.Application
             services.AddObservr();
             services.Configure<AppSettings>(o => configuration.GetSection("AppSettings"));
 
+            services.AddHttpClient("ha", o =>
+            {
+                o.BaseAddress = new Uri(configuration.GetSection("AppSettings:HomeAssistantWebApiUrl").Value);
+                o.DefaultRequestHeaders.Add("Authorization", $"Bearer {configuration.GetSection("AppSettings:HomeAssistantAccessToken").Value}");
+            });
+
             services.AddSingleton<IHaBus, WebSocketBus>();
             services.AddHostedService<EventPublisher>();
             services.AddTransient<IHaService, CommandHandler>();
             services.AddTransient<MessageHandler>();
-
-            //services.AddTransient<EventStrategy>();
 
             return services;
         }

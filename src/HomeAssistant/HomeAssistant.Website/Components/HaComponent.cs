@@ -1,4 +1,6 @@
-﻿using HomeAssistant.Domain;
+﻿using HomeAssistant.Common.Interfaces;
+using HomeAssistant.Domain;
+using HomeAssistant.Domain.States;
 using Microsoft.AspNetCore.Components;
 using Observr;
 using System;
@@ -18,6 +20,7 @@ namespace HomeAssistant.Website.Components
         [Parameter] public string ValueEntityId { get; set; }
 
         [Inject] public IBroker Broker { get; set; }
+        [Inject] public IHaService HaService { get; set; }
 
         public object State { get; private set; }
         public object Value { get; private set; }
@@ -46,13 +49,15 @@ namespace HomeAssistant.Website.Components
             }
         }
 
-        protected override Task OnInitializedAsync()
+        protected override async Task OnInitializedAsync()
         {
             if (!string.IsNullOrEmpty(ValueEntityId) && !string.IsNullOrWhiteSpace(ValueAttribute))
                 throw new ArgumentException("Only one value can be filled in, else value can be overwritten");
 
+            var state = await HaService.GetState<LightState>(EntityId);
+
             _subscription = Broker.Subscribe(this);
-            return base.OnInitializedAsync();
+            await base.OnInitializedAsync();
         }
     }
 }

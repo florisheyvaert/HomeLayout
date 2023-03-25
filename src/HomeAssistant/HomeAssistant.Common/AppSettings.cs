@@ -9,6 +9,7 @@ namespace HomeAssistant.Common
     public class AppSettings
     {
         public string HomeAssistantWebSocketUrl { get; set; }
+        public string HomeAssistantWebApiUrl { get; set; }
         public string HomeAssistantAccessToken { get; set; }
     }
 }
