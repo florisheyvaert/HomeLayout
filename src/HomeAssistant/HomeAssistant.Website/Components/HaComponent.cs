@@ -34,7 +34,7 @@ namespace HomeAssistant.Website.Components
         {
             if (value.EntityId == EntityId)
             {
-                State = value.NewState.State;
+                State = value.NewState;
 
                 if (!string.IsNullOrWhiteSpace(ValueAttribute) && value.NewState.Attributes.ContainsKey(ValueAttribute))
                     Value = value.NewState.Attributes[ValueAttribute];
@@ -44,7 +44,7 @@ namespace HomeAssistant.Website.Components
 
             if (value.EntityId == ValueEntityId)
             {
-                Value = value.NewState.State;
+                Value = value.NewState;
                 await InvokeAsync(StateHasChanged);
             }
         }
@@ -54,7 +54,7 @@ namespace HomeAssistant.Website.Components
             if (!string.IsNullOrEmpty(ValueEntityId) && !string.IsNullOrWhiteSpace(ValueAttribute))
                 throw new ArgumentException("Only one value can be filled in, else value can be overwritten");
 
-            var state = await HaService.GetState<LightState>(EntityId);
+            //var state = await HaService.GetState<LightState>(EntityId);
 
             _subscription = Broker.Subscribe(this);
             await base.OnInitializedAsync();

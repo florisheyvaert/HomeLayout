@@ -15,7 +15,7 @@ namespace HomeAssistant.Application.Commands.Profiles
             CreateMap<SwitchState, HaCommand>()
                 .ForMember(x => x.EntityId, o => o.MapFrom(y => y.EntityId))
                 .ForMember(x => x.Domain, o => o.MapFrom(y => CommandDomain.Switch))
-                .ForMember(x => x.Service, o => o.MapFrom(y => y.State == BasicState.On ? CommandService.TurnOn : CommandService.TurnOff))
+                .ForMember(x => x.Service, o => o.MapFrom(y => y.Value ? CommandService.TurnOn : CommandService.TurnOff))
                 .ForMember(x => x.Data, o => o.MapFrom(y => new Dictionary<string, object>()));
         }
     }

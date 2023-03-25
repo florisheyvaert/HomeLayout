@@ -1,8 +1,8 @@
 @import url('error.css');
 
 :root {
-    --primary-color-code: 25, 75, 95;
-    --accent-color-code: 221, 110, 66;
+    --primary-color-code: 59, 39, 21;
+    --accent-color-code: 136, 136, 68;
     --primary-color: rgba(var(--primary-color-code), 1);
     --primary-color-100: rgba(var(--primary-color-code), 0.1);
     --primary-color-200: rgba(var(--primary-color-code), 0.2);
@@ -38,8 +38,10 @@ p, h1, h2, h3, h4, h5 {
 }
 
 .main {
-    background: url('../images/background_1.png');
-    background-size: cover;
+    /*background: url('../images/background_1.png');
+    background-size: cover;*/
+    background-color: #161616;
+    color: var(--primary-font-color);
 }
 
 button {
@@ -60,6 +62,15 @@ a.selected .toolbar-item {
     border-radius: .5rem;
 }
 
+.toolbar {
+    background: #111;
+}
+
+    .toolbar > div {
+        max-width: 40rem;
+        margin: auto;
+    }
+
 .toolbar-item.active {
     opacity: 1;
 }
@@ -68,3 +79,18 @@ a.selected .toolbar-item {
     opacity: .5;
 }
 
+/*.toolbar-notification {
+    color: white;
+    text-decoration: none;
+    position: absolute;
+    right: 0;
+    font-size: .75rem;
+    font-weight: bold;
+    padding: .2rem;
+    padding-inline: .3rem;
+    border-radius: .5rem;
+}
+
+a:has(.toolbar-item){
+    position: relative;
+}*/

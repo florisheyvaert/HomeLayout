@@ -15,13 +15,13 @@ namespace HomeAssistant.Application.Commands.Profiles
             CreateMap<LightState, HaCommand>()
                 .ForMember(x => x.EntityId, o => o.MapFrom(y => y.EntityId))
                 .ForMember(x => x.Domain, o => o.MapFrom(y => CommandDomain.Light))
-                .ForMember(x => x.Service, o => o.MapFrom(y => y.State == BasicState.On ? CommandService.TurnOn : CommandService.TurnOff))
+                .ForMember(x => x.Service, o => o.MapFrom(y => y.Value ? CommandService.TurnOn : CommandService.TurnOff))
                 .ForMember(x => x.Data, o => o.MapFrom(y => CreateData(y)));
         }
 
         private Dictionary<string, object> CreateData(LightState state)
         {
-            return state.State == BasicState.Off ? new() : new()
+            return !state.Value ? new() : new()
             {
                 {  "brightness", state.Brightness }
             };

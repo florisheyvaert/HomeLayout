@@ -10,7 +10,7 @@ namespace HomeAssistant.Domain.States
     {
         public string EntityId { get; set; }
 
-        public BasicState State { get; set; }
+        public bool Value { get; set; }
 
         public Dictionary<string, object> Attributes { get; set; }
 
@@ -43,10 +43,5 @@ namespace HomeAssistant.Domain.States
 
             return 0;
         }
-    }
-
-    public enum BasicState
-    {
-        On, Off
     }
 }

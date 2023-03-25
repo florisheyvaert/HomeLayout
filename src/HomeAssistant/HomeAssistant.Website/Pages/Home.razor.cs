@@ -36,7 +36,7 @@ namespace HomeAssistant.Website.Pages
             var state = new CoverState()
             {
                 EntityId = "cover.bureau",
-                State = BasicState.Off
+                //State = BasicState.Off
             };
             await HaService.SetState(state);
         }
@@ -46,7 +46,7 @@ namespace HomeAssistant.Website.Pages
             var state = new CoverState()
             {
                 EntityId = "cover.bureau",
-                State = BasicState.On
+                //State = BasicState.On
             };
             await HaService.SetState(state);
         }

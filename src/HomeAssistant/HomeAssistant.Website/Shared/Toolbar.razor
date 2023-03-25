@@ -1,35 +1,38 @@
-﻿<div class="position-fixed start-0 end-0 bottom-0" style="background: #111;">
-    <div class="d-flex justify-content-between p-3 align-items-center" style="height: @Height; max-width: 50rem; margin: auto;">
+﻿<div class="position-fixed start-0 end-0 bottom-0 toolbar">
+    <div class="d-flex justify-content-between p-3 align-items-center" style="height: @Height;">
 
-    <NavLink ActiveClass="selected" href="heating">
-        <div class="p-2 toolbar-item" style="color: #eee;">
-            <Icon Name="thermometer" Size="1.5rem" />
-        </div>
-    </NavLink>
+        <NavLink ActiveClass="selected" href="heating">
+            <div class="p-2 toolbar-item" style="color: #eee;">
+                <Icon Name="thermometer" Size="1.5rem" />
+            </div>
+        </NavLink>
 
-    <NavLink ActiveClass="selected" href="plugs">
-        <div class="p-2 toolbar-item" style="color: #eee;">
-            <Icon Name="zap" Size="1.5rem" />
-        </div>
-    </NavLink>
+        <NavLink ActiveClass="selected" href="plugs">
+            <div class="toolbar-notification">1</div>
+            <div class="p-2 toolbar-item" style="color: #eee;">
+                <Icon Name="zap" Size="1.5rem" />
+            </div>
+        </NavLink>
 
-    <NavLink ActiveClass="selected" href="">
-        <div class="p-2 toolbar-item" style="color: #eee;">
-            <Icon Name="home" Size="1.5rem" />
-        </div>
-    </NavLink>
+        <NavLink ActiveClass="selected" href="" Match="NavLinkMatch.All">
+            <div class="p-2 toolbar-item" style="color: #eee;">
+                <Icon Name="home" Size="1.5rem" />
+            </div>
+        </NavLink>
 
-    <NavLink ActiveClass="selected" href="lights">
-        <div class="p-2 toolbar-item" style="color: #eee;">
-            <Icon Name="lightbulb" Size="1.5rem" />
-        </div>
-    </NavLink>
+        <NavLink ActiveClass="selected" href="lights">
+            <div class="toolbar-notification">2</div>
 
-    <NavLink ActiveClass="selected" href="notifications">
-        <div class="p-2 toolbar-item" style="color: #eee;">
-            <Icon Name="bell" Size="1.5rem" />
-        </div>
-    </NavLink>
+            <div class="p-2 toolbar-item" style="color: #eee;">
+                <Icon Name="lightbulb" Size="1.5rem" />
+            </div>
+        </NavLink>
+
+        <NavLink ActiveClass="selected" href="notifications">
+            <div class="p-2 toolbar-item" style="color: #eee;">
+                <Icon Name="bell" Size="1.5rem" />
+            </div>
+        </NavLink>
 
     </div>
 </div>
