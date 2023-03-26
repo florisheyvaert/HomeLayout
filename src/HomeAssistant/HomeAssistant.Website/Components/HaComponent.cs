@@ -11,19 +11,17 @@ using System.Threading.Tasks;
 
 namespace HomeAssistant.Website.Components
 {
-    public class HaComponent : ComponentBase, Observr.IObserver<HaStateChangedMessage>, IDisposable
+    public class HaComponent<TE> : ComponentBase, Observr.IObserver<HaStateChangedMessage>, IDisposable where TE : BaseState
     {
         private IDisposable _subscription;
 
         [Parameter] public string EntityId { get; set; }
-        [Parameter] public string ValueAttribute { get; set; }
-        [Parameter] public string ValueEntityId { get; set; }
 
         [Inject] public IBroker Broker { get; set; }
         [Inject] public IHaService HaService { get; set; }
 
-        public object State { get; private set; }
-        public object Value { get; private set; }
+        public TE OldState { get; private set; }
+        public TE NewState { get; private set; }
 
         public void Dispose()
         {
@@ -34,29 +32,20 @@ namespace HomeAssistant.Website.Components
         {
             if (value.EntityId == EntityId)
             {
-                State = value.NewState;
+                OldState = (TE)Activator.CreateInstance(typeof(TE), value.OldState);
+                NewState = (TE)Activator.CreateInstance(typeof(TE), value.NewState);
 
-                if (!string.IsNullOrWhiteSpace(ValueAttribute) && value.NewState.Attributes.ContainsKey(ValueAttribute))
-                    Value = value.NewState.Attributes[ValueAttribute];
-
-                await InvokeAsync(StateHasChanged);
-            }
-
-            if (value.EntityId == ValueEntityId)
-            {
-                Value = value.NewState;
                 await InvokeAsync(StateHasChanged);
             }
         }
 
         protected override async Task OnInitializedAsync()
         {
-            if (!string.IsNullOrEmpty(ValueEntityId) && !string.IsNullOrWhiteSpace(ValueAttribute))
-                throw new ArgumentException("Only one value can be filled in, else value can be overwritten");
-
-            var state = await HaService.GetState<LightState>(EntityId);
+            var initialState = await HaService.GetState(EntityId);
+            NewState = (TE)Activator.CreateInstance(typeof(TE), initialState);
 
             _subscription = Broker.Subscribe(this);
+            
             await base.OnInitializedAsync();
         }
     }

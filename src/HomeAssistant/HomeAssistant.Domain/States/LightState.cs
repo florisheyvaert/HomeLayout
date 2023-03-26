@@ -9,28 +9,14 @@ namespace HomeAssistant.Domain.States
 {
     public class LightState : BaseState
     {
-        public decimal Brightness { get; set; }
+        public decimal Brightness
+        {
+            get => Math.Round(GetAttributeDecimal("brightness") / (decimal)2.56);
+            set => SetAtttribute("brightness", value * (decimal)2.56);
+        }
 
         public LightState(BaseState baseState) : base(baseState)
         {
-            Brightness = GetAttributeDecimal("brightness") / (decimal)2.56;
-        }
-
-        public LightState()
-        {
-            
-        }
-
-        public LightState TurnOn()
-        {
-            Brightness = 100;
-            return this;
-        }
-
-        public LightState Dim(decimal brightness)
-        {
-            Brightness = brightness;
-            return this;
         }
     }
 }

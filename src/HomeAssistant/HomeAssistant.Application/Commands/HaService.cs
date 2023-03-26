@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using HomeAssistant.Application.WebSocket.Models;
 using HomeAssistant.Common.Interfaces;
 using HomeAssistant.Domain;
 using HomeAssistant.Domain.States;
@@ -29,7 +30,7 @@ namespace HomeAssistant.Application.Commands
             _httpClientFactory = httpClientFactory;
         }
 
-        public async Task<TE> GetState<TE>(string entityId) where TE : BaseState
+        public async Task<BaseState> GetState(string entityId)
         {
             var url = $"api/states/{entityId}";
             var client = _httpClientFactory.CreateClient("ha");
@@ -38,7 +39,8 @@ namespace HomeAssistant.Application.Commands
 
             if (request.IsSuccessStatusCode)
             {
-                var mapped = JsonSerializer.Deserialize<TE>(content);
+                var state = JsonSerializer.Deserialize<State>(content, new JsonSerializerOptions() { PropertyNameCaseInsensitive = true });
+                var mapped = _mapper.Map<BaseState>(state);
                 return mapped;
             }
             else

@@ -43,5 +43,13 @@ namespace HomeAssistant.Domain.States
 
             return 0;
         }
+
+        protected void SetAtttribute(string key, object value)
+        {
+            if (Attributes.ContainsKey(key))
+                Attributes[key] = value;
+            else
+                Attributes.Add(key, value);
+        }
     }
 }
