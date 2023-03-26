@@ -3,6 +3,10 @@
 :root {
     --primary-color-code: 59, 39, 21;
     --accent-color-code: 136, 136, 68;
+    --entity-light-color-code: 252, 186, 3;
+    --entity-switch-color-code: 219, 112, 55;
+    --entity-cover-color-code: 55, 159, 219;
+    --entity-base-bg-color-code: 34, 34, 34;
     --primary-color: rgba(var(--primary-color-code), 1);
     --primary-color-100: rgba(var(--primary-color-code), 0.1);
     --primary-color-200: rgba(var(--primary-color-code), 0.2);
@@ -27,13 +31,52 @@
     --accent-color-900: rgba(var(--accent-color-code), 0.9);
     --accent-font-color: rgba(255, 255, 255);
     --accent-font-color-900: rgba(255, 255, 255);
+    --entity-light-color: rgba(var(--entity-light-color-code), 1);
+    --entity-light-color-100: rgba(var(--entity-light-color-code), 0.1);
+    --entity-light-color-200: rgba(var(--entity-light-color-code), 0.2);
+    --entity-light-color-300: rgba(var(--entity-light-color-code), 0.3);
+    --entity-light-color-400: rgba(var(--entity-light-color-code), 0.4);
+    --entity-light-color-500: rgba(var(--entity-light-color-code), 0.5);
+    --entity-light-color-600: rgba(var(--entity-light-color-code), 0.6);
+    --entity-light-color-700: rgba(var(--entity-light-color-code), 0.7);
+    --entity-light-color-800: rgba(var(--entity-light-color-code), 0.8);
+    --entity-light-color-900: rgba(var(--entity-light-color-code), 0.9);
+    --entity-light-font-color: rgba(0, 0, 0);
+    --entity-light-font-color-900: rgba(255, 255, 255);
+    --entity-light-bg-color: rgba(var(--entity-base-bg-color-code), 0);
+    --entity-switch-color: rgba(var(--entity-switch-color-code), 1);
+    --entity-switch-color-100: rgba(var(--entity-switch-color-code), 0.1);
+    --entity-switch-color-200: rgba(var(--entity-switch-color-code), 0.2);
+    --entity-switch-color-300: rgba(var(--entity-switch-color-code), 0.3);
+    --entity-switch-color-400: rgba(var(--entity-switch-color-code), 0.4);
+    --entity-switch-color-500: rgba(var(--entity-switch-color-code), 0.5);
+    --entity-switch-color-600: rgba(var(--entity-switch-color-code), 0.6);
+    --entity-switch-color-700: rgba(var(--entity-switch-color-code), 0.7);
+    --entity-switch-color-800: rgba(var(--entity-switch-color-code), 0.8);
+    --entity-switch-color-900: rgba(var(--entity-switch-color-code), 0.9);
+    --entity-switch-font-color: rgba(0, 0, 0);
+    --entity-switch-font-color-900: rgba(255, 255, 255);
+    --entity-cover-bg-color: rgba(var(--entity-base-bg-color-code), 0);
+    --entity-cover-color: rgba(var(--entity-cover-color-code), 1);
+    --entity-cover-color-100: rgba(var(--entity-cover-color-code), 0.1);
+    --entity-cover-color-200: rgba(var(--entity-cover-color-code), 0.2);
+    --entity-cover-color-300: rgba(var(--entity-cover-color-code), 0.3);
+    --entity-cover-color-400: rgba(var(--entity-cover-color-code), 0.4);
+    --entity-cover-color-500: rgba(var(--entity-cover-color-code), 0.5);
+    --entity-cover-color-600: rgba(var(--entity-cover-color-code), 0.6);
+    --entity-cover-color-700: rgba(var(--entity-cover-color-code), 0.7);
+    --entity-cover-color-800: rgba(var(--entity-cover-color-code), 0.8);
+    --entity-cover-color-900: rgba(var(--entity-cover-color-code), 0.9);
+    --entity-cover-font-color: rgba(0, 0, 0);
+    --entity-cover-font-color-900: rgba(255, 255, 255);
+    --entity-cover-bg-color: rgba(var(--entity-base-bg-color-code), 0);
 }
 
 html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
-p, h1, h2, h3, h4, h5 {
+p, h1, h2, h3, h4, h5, h6 {
     margin: 0;
 }
 
@@ -94,3 +137,50 @@ a.selected .toolbar-item {
 a:has(.toolbar-item){
     position: relative;
 }*/
+
+.btn-entity-light {
+    background-color: var(--entity-light-color-300);
+    color: var(--entity-light-font-color);
+    border: 1px solid var(--entity-light-color-300);
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    font-size: .75rem;
+}
+
+    .btn-entity-light:active,
+    .btn-entity-light.active {
+        background-color: var(--entity-light-color-600);
+        font-weight: bold;
+    }
+
+.btn-entity-switch {
+    color: var(--entity-switch-color-600);
+    background-color: var(--entity-switch-bg-color);
+    border: 1px solid var(--entity-switch-color-300);
+    border-top-right-radius: 0;
+    border-top-left-radius: 0;
+    font-size: .75rem;
+}
+
+    .btn-entity-switch:active,
+    .btn-entity-switch.active {
+        background-color: var(--entity-switch-color-800);
+        color: var(--entity-switch-font-color);
+        font-weight: bold;
+    }
+
+.btn-entity-cover {
+    color: var(--entity-cover-color-600);
+    background-color: var(--entity-cover-bg-color);
+    border: 1px solid var(--entity-cover-color-300);
+    border-top-right-radius: 0;
+    border-top-left-radius: 0;
+    font-size: .75rem;
+}
+
+    .btn-entity-cover:active,
+    .btn-entity-cover.active {
+        background-color: var(--entity-cover-color-800);
+        color: var(--entity-cover-font-color);
+        font-weight: bold;
+    }

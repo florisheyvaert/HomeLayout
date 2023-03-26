@@ -9,5 +9,15 @@ namespace HomeAssistant.Domain.States
     public class CoverState : BaseState
     {
         public decimal Position { get; set; }
+
+        public CoverState(BaseState state) : base(state)
+        {
+            
+        }
+
+        public CoverState()
+        {
+            
+        }
     }
 }

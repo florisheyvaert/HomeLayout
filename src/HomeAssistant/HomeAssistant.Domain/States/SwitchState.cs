@@ -8,5 +8,13 @@ namespace HomeAssistant.Domain.States
 {
     public class SwitchState : BaseState
     {
+        public SwitchState(BaseState baseState) : base(baseState)
+        {
+        }
+
+        public SwitchState()
+        {
+
+        }
     }
 }
