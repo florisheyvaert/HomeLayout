@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace HomeAssistant.Website.Components
 {
-    public class HaComponent<TE> : ComponentBase, Observr.IObserver<HaStateChangedMessage>, IDisposable where TE : BaseState
+    public class HaComponent<TE> : ComponentBase, Observr.IObserver<HaStateChangedMessage>, IDisposable where TE : BaseState, new()
     {
         private IDisposable _subscription;
 
@@ -21,7 +21,7 @@ namespace HomeAssistant.Website.Components
         [Inject] public IHaService HaService { get; set; }
 
         public TE OldState { get; private set; }
-        public TE NewState { get; private set; }
+        public TE State { get; private set; } = new();
 
         public void Dispose()
         {
@@ -33,16 +33,20 @@ namespace HomeAssistant.Website.Components
             if (value.EntityId == EntityId)
             {
                 OldState = (TE)Activator.CreateInstance(typeof(TE), value.OldState);
-                NewState = (TE)Activator.CreateInstance(typeof(TE), value.NewState);
+                State = (TE)Activator.CreateInstance(typeof(TE), value.NewState);
+
+                await StateChanged(State);
 
                 await InvokeAsync(StateHasChanged);
             }
         }
 
+        protected virtual Task StateChanged(TE newState) => Task.CompletedTask;
+
         protected override async Task OnInitializedAsync()
         {
             var initialState = await HaService.GetState(EntityId);
-            NewState = (TE)Activator.CreateInstance(typeof(TE), initialState);
+            State = (TE)Activator.CreateInstance(typeof(TE), initialState);
 
             _subscription = Broker.Subscribe(this);
             

@@ -8,11 +8,16 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
     <base href="~/" />
-    <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
+    <link rel="icon" type="image/png" href="favicon.png"/>
+
+    <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet" />
     <link href="css/site.css" rel="stylesheet" />
     <link href="HomeAssistant.Website.styles.css" rel="stylesheet" />
-    <link rel="icon" type="image/png" href="favicon.png"/>
+
+    <link href="lib/roundslider/roundslider.min.css" rel="stylesheet" />
+
     <component type="typeof(HeadOutlet)" render-mode="ServerPrerendered" />
 </head>
 <body>
@@ -30,5 +35,32 @@
     </div>
 
     <script src="_framework/blazor.server.js"></script>
+    <script src="lib/jquery/jquery.min.js"></script>
+    <script src="lib/roundslider/roundslider.min.js"></script>
+
+    <script>
+        window.Test = function(){
+
+            $("#slider").roundSlider({
+                radius: 80,
+                circleShape: "pie",
+                sliderType: "min-range",
+                showTooltip: false,
+                value: 50,
+                startAngle: 315
+            });
+
+        }
+
+        window.SetValue = function (value) {
+            $("#slider").roundSlider("option", "value", value);
+            return value;
+        }
+
+        window.GetValue = function(){
+            var value = $("#slider").roundSlider("option", "value");
+            return value;
+        }
+    </script>
 </body>
 </html>

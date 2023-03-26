@@ -20,6 +20,7 @@ namespace HomeAssistant.Domain.States
         {
             EntityId = baseState.EntityId;
             Attributes = baseState.Attributes;
+            Value = baseState.Value;
         }
 
         public BaseState()
@@ -27,7 +28,7 @@ namespace HomeAssistant.Domain.States
 
         }
 
-        protected string GetAttribute(string key)
+        public string GetAttribute(string key)
         {
             if (Attributes is object && Attributes.TryGetValue(key, out var value))
                 return value?.ToString() ?? string.Empty;
@@ -35,7 +36,7 @@ namespace HomeAssistant.Domain.States
                 return string.Empty;
         }
 
-        protected decimal GetAttributeDecimal(string key)
+        public decimal GetAttributeDecimal(string key)
         {
             var attribute = GetAttribute(key);
             if (decimal.TryParse(attribute, out var result))

@@ -18,5 +18,10 @@ namespace HomeAssistant.Domain.States
         public LightState(BaseState baseState) : base(baseState)
         {
         }
+
+        public LightState()
+        {
+            
+        }
     }
 }

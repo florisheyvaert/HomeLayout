@@ -23,7 +23,7 @@ namespace HomeAssistant.Application.Commands.Profiles
         {
             return !state.Value ? new() : new()
             {
-                {  "brightness", state.Brightness }
+                {  "brightness", state.GetAttributeDecimal("brightness") }
             };
         }
     }

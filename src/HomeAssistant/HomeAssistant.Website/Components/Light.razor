@@ -1,4 +1,17 @@
 ﻿@inherits LightBase
 
-<p>@State</p>
-<p>@NewState.Brightness</p>
+<div class="d-flex align-items-center flex-column rounded-3 p-3" style="cursor: pointer; font-size: .85rem; border: 1px solid var(--accent-color); background: @(State.Value ? "var(--accent-color-500)" : "")"
+     @onclick="Toggle">
+
+    @if (State.Value)
+    {
+        <Icon Name="lightbulb" Size="1.5rem" />
+        <p class="fw-bold pt-2" style="font-size: .8rem;">@State?.FriendlyName</p>
+    }
+    else
+    {
+        <Icon Name="lightbulb" Size="1.5rem" CssStyle="opacity: .25" />
+        <p class="fw-bold pt-2" style="font-size: .8rem; opacity: .75;">@State?.FriendlyName</p>
+    }
+
+</div>
