@@ -1,6 +1,6 @@
 ﻿@inherits LightBase
 
-<div class="d-flex align-items-center flex-column rounded-3 p-3" style="cursor: pointer; font-size: .85rem; border: 1px solid var(--accent-color); background: @(State.Value ? "var(--accent-color-500)" : "")"
+@*<div class="d-flex align-items-center flex-column rounded-3 p-3" style="cursor: pointer; font-size: .85rem; border: 1px solid var(--accent-color); background: @(State.Value ? "var(--accent-color-500)" : "")"
      @onclick="Toggle">
 
     @if (State.Value)
@@ -14,4 +14,19 @@
         <p class="fw-bold pt-2" style="font-size: .8rem; opacity: .75;">@State?.FriendlyName</p>
     }
 
+</div>*@
+
+
+<div class="p-2 rounded-2 position-relative w-50" style="background: #222;">
+    <h6>Onder warmtepomp</h6>
+
+    <div class="btn-group w-100 mt-2">
+        <a href="#" class="btn btn-warning">Uit</a>
+        <a href="#" class="btn btn-outline-warning" aria-current="page">Aan</a>
+    </div>
+
+    <div class="position-absolute top-0 end-0 p-1 rounded-1 d-flex" style="background-color: darkkhaki;">
+        @*<span class="badge bg-danger me-2">Danger</span>*@
+        <Icon Name="zap" Size=".8rem" />
+    </div>
 </div>
