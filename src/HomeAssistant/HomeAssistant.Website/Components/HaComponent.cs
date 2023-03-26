@@ -54,7 +54,7 @@ namespace HomeAssistant.Website.Components
             if (!string.IsNullOrEmpty(ValueEntityId) && !string.IsNullOrWhiteSpace(ValueAttribute))
                 throw new ArgumentException("Only one value can be filled in, else value can be overwritten");
 
-            //var state = await HaService.GetState<LightState>(EntityId);
+            var state = await HaService.GetState<LightState>(EntityId);
 
             _subscription = Broker.Subscribe(this);
             await base.OnInitializedAsync();

@@ -15,14 +15,17 @@ namespace HomeAssistant.Application
     {
         public static IServiceCollection AddApplication(this IServiceCollection services, IConfiguration configuration)
         {
+            var settings = new AppSettings();
+            configuration.GetSection(nameof(AppSettings)).Bind(settings);
+            services.Configure<AppSettings>(configuration.GetSection(nameof(AppSettings)));
+
             services.AddAutoMapper(Assembly.GetExecutingAssembly());
             services.AddObservr();
-            services.Configure<AppSettings>(o => configuration.GetSection("AppSettings"));
 
             services.AddHttpClient("ha", o =>
             {
-                o.BaseAddress = new Uri(configuration.GetSection("AppSettings:HomeAssistantWebApiUrl").Value);
-                o.DefaultRequestHeaders.Add("Authorization", $"Bearer {configuration.GetSection("AppSettings:HomeAssistantAccessToken").Value}");
+                o.BaseAddress = new Uri(settings.HomeAssistantWebApiUrl);
+                o.DefaultRequestHeaders.Add("Authorization", $"Bearer {settings.HomeAssistantAccessToken}");
             });
 
             services.AddSingleton<IHaBus, WebSocketBus>();

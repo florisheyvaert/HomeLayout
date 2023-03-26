@@ -31,8 +31,8 @@ namespace HomeAssistant.Application.Commands
 
         public async Task<TE> GetState<TE>(string entityId) where TE : BaseState
         {
-            var url = $"http://192.168.5.6:8123/api/states/{entityId}"; // todo fix this sht
-            //var url = $"/states/{entityId}";
+            //var url = $"http://192.168.5.6:8123/api/states/{entityId}"; // todo fix this sht
+            var url = $"api/states/{entityId}";
             var client = _httpClientFactory.CreateClient("ha");
             var request = await client.GetAsync(url);
             var content = await request.Content.ReadAsStringAsync();
