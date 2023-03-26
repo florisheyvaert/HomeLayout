@@ -5,6 +5,7 @@ using HomeAssistant.Common.Extensions;
 using HomeAssistant.Common.Interfaces;
 using HomeAssistant.Domain;
 using HomeAssistant.Domain.States;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
@@ -23,12 +24,14 @@ namespace HomeAssistant.Application.WebSocket
         private string _url;
         private string _accessToken;
         private readonly IMapper _mapper;
+        private readonly ILogger<WebSocketBus> _logger;
 
-        public WebSocketBus(IOptions<AppSettings> options, IMapper mapper)
+        public WebSocketBus(IOptions<AppSettings> options, IMapper mapper, ILogger<WebSocketBus> logger)
         {
             _url = options.Value.HomeAssistantWebSocketUrl;
             _accessToken = options.Value.HomeAssistantAccessToken;
             _mapper = mapper;
+            _logger = logger;
         }
 
         public async Task<HaMessage> Receive()
@@ -126,8 +129,7 @@ namespace HomeAssistant.Application.WebSocket
             var result = await _webSocket.ReceiveAsync(buffer, CancellationToken.None);
             var content = Encoding.ASCII.GetString(buffer, 0, result.Count);
 
-            // move to loglevel
-            await Console.Out.WriteLineAsync($"{Environment.NewLine}{content}");
+            _logger.LogTrace("Bus message received: {content}", content);
 
             return content;
         }
