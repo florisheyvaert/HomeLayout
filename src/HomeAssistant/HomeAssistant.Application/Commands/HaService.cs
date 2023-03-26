@@ -12,13 +12,13 @@ using System.Threading.Tasks;
 
 namespace HomeAssistant.Application.Commands
 {
-    internal class CommandHandler : IHaService
+    internal class HaService : IHaService
     {
         private readonly IHaBus _bus;
         private readonly IMapper _mapper;
         private readonly IHttpClientFactory _httpClientFactory;
 
-        public CommandHandler(
+        public HaService(
             IHaBus bus,
             IMapper mapper,
             IHttpClientFactory httpClientFactory
@@ -31,7 +31,6 @@ namespace HomeAssistant.Application.Commands
 
         public async Task<TE> GetState<TE>(string entityId) where TE : BaseState
         {
-            //var url = $"http://192.168.5.6:8123/api/states/{entityId}"; // todo fix this sht
             var url = $"api/states/{entityId}";
             var client = _httpClientFactory.CreateClient("ha");
             var request = await client.GetAsync(url);

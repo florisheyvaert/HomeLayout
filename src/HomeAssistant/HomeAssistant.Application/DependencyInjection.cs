@@ -30,7 +30,7 @@ namespace HomeAssistant.Application
 
             services.AddSingleton<IHaBus, WebSocketBus>();
             services.AddHostedService<EventPublisher>();
-            services.AddTransient<IHaService, CommandHandler>();
+            services.AddTransient<IHaService, HaService>();
             services.AddTransient<MessageHandler>();
 
             return services;
