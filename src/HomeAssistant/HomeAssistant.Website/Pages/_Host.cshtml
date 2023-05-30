@@ -36,31 +36,9 @@
 
     <script src="_framework/blazor.server.js"></script>
     <script src="lib/jquery/jquery.min.js"></script>
+    <script src="lib/fabric.js/fabric.js"></script>
+    <script src="lib/fabric.js/custom.fabric.js"></script>
     <script src="lib/roundslider/roundslider.min.js"></script>
 
-    <script>
-        window.Test = function(){
-
-            $("#slider").roundSlider({
-                radius: 80,
-                circleShape: "pie",
-                sliderType: "min-range",
-                showTooltip: false,
-                value: 50,
-                startAngle: 315
-            });
-
-        }
-
-        window.SetValue = function (value) {
-            $("#slider").roundSlider("option", "value", value);
-            return value;
-        }
-
-        window.GetValue = function(){
-            var value = $("#slider").roundSlider("option", "value");
-            return value;
-        }
-    </script>
 </body>
 </html>

@@ -2,11 +2,9 @@
 
 <PageTitle>Home</PageTitle>
 
-<div class="d-flex p-2 flex-wrap">
+<canvas id="home">
+</canvas>
 
-    <Light EntityId="light.toilet_beneden" />
-
-    <Switch EntityId="light.toilet_beneden" />
-
-    <Cover EntityId="light.toilet_beneden" />
+<div class="position-absolute bottom-0 left-0">
+    <button @onclick="AddRect">Add rect</button>
 </div>

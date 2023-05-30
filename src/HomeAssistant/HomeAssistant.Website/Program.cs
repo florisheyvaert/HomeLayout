@@ -2,6 +2,7 @@ using HomeAssistant.Application;
 using Microsoft.Extensions.Configuration;
 using NLog.Web;
 using NLog;
+using HomeAssistant.Website.Services;
 
 internal class Program
 {
@@ -18,6 +19,8 @@ internal class Program
             builder.Services.AddRazorPages();
             builder.Services.AddServerSideBlazor();
             builder.Services.AddApplication(builder.Configuration);
+
+            builder.Services.AddTransient<IDrawer, Fabric>();
 
             // NLog: Setup NLog for Dependency injection
             builder.Logging.ClearProviders();
