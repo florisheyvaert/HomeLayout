@@ -29,7 +29,61 @@ namespace HomeAssistant.Website.Pages
 
         private async Task AddRect()
         {
-            await Drawer.AddRect(100, 100, 10, 10, "#F00");
+            var style = new DrawingStyle()
+            {
+                FillColor = "#F00"
+            };
+
+            var drawing = new Drawing()
+            {
+                Top = 10,
+                Left = 10,
+                Height = 50,
+                Width = 10,
+                Shape = Shape.Rectangle,
+                Style = style
+            };
+
+            await Drawer.Draw(drawing);
+        }
+
+        private async Task AddCircle()
+        {
+            var style = new DrawingStyle()
+            {
+                FillColor = "#F00"
+            };
+
+            var drawing = new Drawing()
+            {
+                Radius = 10,
+                Top = 10,
+                Left = 10,
+                Shape = Shape.Circle,
+                Style = style
+            };
+
+            await Drawer.Draw(drawing);
+        }
+
+        private async Task AddTriangle()
+        {
+            var style = new DrawingStyle()
+            {
+                FillColor = "#F00"
+            };
+
+            var drawing = new Drawing()
+            {
+                Top = 10,
+                Left = 10,
+                Height = 50,
+                Width = 10,
+                Shape = Shape.Triangle,
+                Style = style
+            };
+
+            await Drawer.Draw(drawing);
         }
     }
 }

@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using NLog.Web;
 using NLog;
 using HomeAssistant.Website.Services;
+using System.Reflection;
 
 internal class Program
 {
@@ -19,6 +20,7 @@ internal class Program
             builder.Services.AddRazorPages();
             builder.Services.AddServerSideBlazor();
             builder.Services.AddApplication(builder.Configuration);
+            builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
 
             builder.Services.AddTransient<IDrawer, Fabric>();
 

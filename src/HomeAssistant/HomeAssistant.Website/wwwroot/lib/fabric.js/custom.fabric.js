@@ -9,6 +9,14 @@ var customFabric = {
         window.addEventListener('resize', this.OnResize, false);
 
         this.OnResize();
+
+        var circle = new fabric.Circle({
+            radius: 50,
+            fill: 'green',
+            stroke: 'green',
+        });
+
+        this.canvas.add(circle);
     },
 
     AddRect: function (left, top, width, height, fill) {
@@ -22,6 +30,26 @@ var customFabric = {
         });
 
         this.canvas.add(rect);
+    },
+
+    AddDrawing: function (drawing) {
+
+        var fabricObject;
+
+        console.log(drawing);
+
+        if (drawing.type == "rect") {
+            fabricObject = new fabric.Rect(drawing);
+        } else if (drawing.type == "circle") {
+            fabricObject = new fabric.Circle(drawing);
+        } else if (drawing.type == "triangle") {
+            fabricObject = new fabric.Triangle(drawing);
+        }
+
+        if (fabricObject) {
+            this.canvas.add(fabricObject);
+        }
+
     },
 
     OnResize: function() {
