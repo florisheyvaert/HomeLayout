@@ -9,34 +9,11 @@ var customFabric = {
         window.addEventListener('resize', this.OnResize, false);
 
         this.OnResize();
-
-        var circle = new fabric.Circle({
-            radius: 50,
-            fill: 'green',
-            stroke: 'green',
-        });
-
-        this.canvas.add(circle);
-    },
-
-    AddRect: function (left, top, width, height, fill) {
-
-        var rect = new fabric.Rect({
-            left: 100,
-            top: 100,
-            fill: 'red',
-            width: 20,
-            height: 20
-        });
-
-        this.canvas.add(rect);
     },
 
     AddDrawing: function (drawing) {
 
         var fabricObject;
-
-        console.log(drawing);
 
         if (drawing.type == "rect") {
             fabricObject = new fabric.Rect(drawing);
@@ -46,15 +23,40 @@ var customFabric = {
             fabricObject = new fabric.Triangle(drawing);
         }
 
+        fabricObject.toObject = (function (toObject) {
+            return function () {
+                return fabric.util.object.extend(toObject.call(this), {
+                    id: this.id,
+                    styleId: this.styleId
+                });
+            };
+        })(fabricObject.toObject);
+
         if (fabricObject) {
+            this.Map(fabricObject, drawing);
             this.canvas.add(fabricObject);
         }
 
+        console.log(drawing);
+        //console.log(JSON.stringify(this.canvas));
     },
 
-    OnResize: function() {
+    ExportJson: function () {
+        return JSON.stringify(this.canvas);
+    },
+
+    ImportJson: function (json) {
+        this.canvas.loadFromJSON(json);
+    },
+
+    OnResize: function () {
         this.canvas.setHeight(window.innerHeight);
         this.canvas.setWidth(window.innerWidth);
         this.canvas.renderAll();
+    },
+
+    Map: function (fabricObject, drawing) {
+        fabricObject.id = drawing.id;
+        fabricObject.styleId = drawing.styleId;
     }
 }

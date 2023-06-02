@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.JSInterop;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace HomeAssistant.Website.Services
@@ -33,9 +34,15 @@ namespace HomeAssistant.Website.Services
             await _js.InvokeVoidAsync($"{_jsNameSpace}.AddDrawing", fabricObject);
         }
 
-        public async Task ExportJson()
+        public async Task<List<Drawing>> Export()
         {
+            InitializedCheck();
 
+            var output = await _js.InvokeAsync<string>($"{_jsNameSpace}.ExportJson");
+            var export = JsonSerializer.Deserialize<FabricObjectExport>(output, options: new() { PropertyNameCaseInsensitive = true });
+            var mapped = _mapper.Map<List<Drawing>>(export.Objects);
+
+            return mapped;
         }
 
         private void InitializedCheck()

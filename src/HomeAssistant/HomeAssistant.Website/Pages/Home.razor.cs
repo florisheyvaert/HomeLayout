@@ -27,15 +27,22 @@ namespace HomeAssistant.Website.Pages
             await base.OnAfterRenderAsync(firstRender);
         }
 
+        private async Task Export()
+        {
+            var result = await Drawer.Export();
+        }
+
         private async Task AddRect()
         {
             var style = new DrawingStyle()
             {
+                Id = 300,
                 FillColor = "#F00"
             };
 
             var drawing = new Drawing()
             {
+                Id = 1,
                 Top = 10,
                 Left = 10,
                 Height = 50,
@@ -51,11 +58,13 @@ namespace HomeAssistant.Website.Pages
         {
             var style = new DrawingStyle()
             {
+                Id = 200,
                 FillColor = "#F00"
             };
 
             var drawing = new Drawing()
             {
+                Id = 2,
                 Radius = 10,
                 Top = 10,
                 Left = 10,
@@ -70,11 +79,13 @@ namespace HomeAssistant.Website.Pages
         {
             var style = new DrawingStyle()
             {
+                Id = 100,
                 FillColor = "#F00"
             };
 
             var drawing = new Drawing()
             {
+                Id = 3,
                 Top = 10,
                 Left = 10,
                 Height = 50,

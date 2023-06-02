@@ -4,5 +4,6 @@
     {
         Task OnInitializedAsync();
         Task Draw(Drawing drawing);
+        Task<List<Drawing>> Export();
     }
 }

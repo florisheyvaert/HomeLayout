@@ -11,7 +11,10 @@ namespace HomeAssistant.Website.Services
             CreateMap<Drawing, FabricObject>()
                 .ForMember(x => x.Type, opts => opts.MapFrom(y => Translate(y.Shape)))
                 .ForMember(x => x.Fill, opts => opts.MapFrom(y => string.IsNullOrWhiteSpace(y.Style.FillColor) ? _defaultStrokeColor : y.Style.FillColor))
-                .ReverseMap();
+                .ForMember(x => x.StyleId, opts => opts.MapFrom(y => y.Style.Id))
+                .ReverseMap()
+                .AfterMap((x, y) => y.Style.FillColor = x.Fill)
+                .AfterMap((x, y) => y.Style.Id = x.StyleId);
         }
 
         private string Translate(Shape shape)
@@ -23,6 +26,12 @@ namespace HomeAssistant.Website.Services
                 _ => "rect",
             };
         }
+    }
+
+    public class FabricObjectExport
+    {
+        public List<FabricObject> Objects { get; set; } = new();
+        public string Background { get; set; }
     }
 
     public class FabricObject
@@ -50,6 +59,8 @@ namespace HomeAssistant.Website.Services
         //"type" : "rect",
         //"width" : 20
 
+        public int Id { get; set; }
+        public int StyleId { get; set; }
         public string Type { get; set; }
         public decimal Top { get; set; }
         public decimal Left { get; set; }
