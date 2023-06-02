@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 namespace HomeAssistant.Persistence
 {
     // add migration: dotnet ef --startup-project ../HomeAssistant.Api/ migrations add AddDrawing
+    // update: dotnet ef --startup-project ../HomeAssistant.Api/ database update
     public class HomeAssistantDbContext : DbContext, IHomeAssistantDbContext
     {
         public DbSet<Drawing> Drawing { get; set; }

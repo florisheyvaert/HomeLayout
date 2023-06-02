@@ -15,6 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\HomeAssistant.Application\HomeAssistant.Application.csproj" />
     <ProjectReference Include="..\HomeAssistant.Common\HomeAssistant.Common.csproj" />
     <ProjectReference Include="..\HomeAssistant.Persistence\HomeAssistant.Persistence.csproj" />
   </ItemGroup>

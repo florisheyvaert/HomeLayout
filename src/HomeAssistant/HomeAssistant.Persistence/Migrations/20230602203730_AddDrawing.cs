@@ -38,7 +38,7 @@ namespace HomeAssistant.Persistence.Migrations
                     Height = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     Radius = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     Shape = table.Column<int>(type: "int", nullable: false),
-                    StyleId = table.Column<int>(type: "int", nullable: false)
+                    StyleId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -47,8 +47,7 @@ namespace HomeAssistant.Persistence.Migrations
                         name: "FK_Drawing_DrawingStyle_StyleId",
                         column: x => x.StyleId,
                         principalTable: "DrawingStyle",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateIndex(

@@ -1,4 +1,5 @@
-﻿using HomeAssistant.Application.Commands;
+﻿using HomeAssistant.Application.Aggregates;
+using HomeAssistant.Application.Commands;
 using HomeAssistant.Application.Messages;
 using HomeAssistant.Application.WebSocket;
 using HomeAssistant.Common;
@@ -13,6 +14,19 @@ namespace HomeAssistant.Application
 {
     public static class DependencyInjection
     {
+        public static IServiceCollection AddApplication_Api(this IServiceCollection services, IConfiguration configuration)
+        {
+            var settings = new AppSettings();
+            configuration.GetSection(nameof(AppSettings)).Bind(settings);
+            services.Configure<AppSettings>(configuration.GetSection(nameof(AppSettings)));
+
+            services.AddAutoMapper(Assembly.GetExecutingAssembly());
+
+            services.AddTransient<IDrawingAggregate, DrawingAggregate>();
+
+            return services;
+        }
+
         public static IServiceCollection AddApplication(this IServiceCollection services, IConfiguration configuration)
         {
             var settings = new AppSettings();

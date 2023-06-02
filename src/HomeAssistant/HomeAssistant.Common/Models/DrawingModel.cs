@@ -1,13 +1,14 @@
-﻿using HomeAssistant.Domain.ValueObjects;
+﻿using HomeAssistant.Domain.Entities;
+using HomeAssistant.Domain.ValueObjects;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HomeAssistant.Domain.Entities
+namespace HomeAssistant.Common.Models
 {
-    public class Drawing
+    public class DrawingModel
     {
         public int Id { get; set; }
 
@@ -19,6 +20,6 @@ namespace HomeAssistant.Domain.Entities
         public Shape Shape { get; set; }
 
         public int? StyleId { get; set; }
-        public DrawingStyle? Style { get; set; } = new();
+        public DrawingStyleModel? Style { get; set; } = new();
     }
 }
