@@ -11,8 +11,8 @@ namespace HomeLayout.Common.Models
         public int Id { get; set; }
         public string Name { get; set; }
 
-        public string? FillColor { get; set; }
-        public string? StrokeColor { get; set; }
-        public decimal? StrokeWidth { get; set; }
+        public string FillColor { get; set; }
+        public string StrokeColor { get; set; }
+        public decimal StrokeWidth { get; set; }
     }
 }

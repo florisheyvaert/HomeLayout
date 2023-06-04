@@ -20,6 +20,6 @@ namespace HomeLayout.Common.Models
         public Shape Shape { get; set; }
 
         public int? StyleId { get; set; }
-        public DrawingStyleModel? Style { get; set; }
+        public DrawingStyleModel Style { get; set; }
     }
 }

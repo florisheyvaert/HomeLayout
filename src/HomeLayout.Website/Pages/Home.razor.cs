@@ -72,9 +72,6 @@ namespace HomeLayout.Website.Pages
 
             foreach (var drawing in drawings)
             {
-                // TODO needs to be removed, Style.Name is not nullable = wtf?
-                var drawingStyle = DrawingStyles.FirstOrDefault(x => x.Id == drawing.StyleId);
-                drawing.Style = drawingStyle;
                 await DrawingAggregate.Update(drawing);
             }
 

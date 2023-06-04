@@ -19,6 +19,6 @@ namespace HomeLayout.Domain.Entities
         public Shape Shape { get; set; }
 
         public int? StyleId { get; set; }
-        public DrawingStyle? Style { get; set; } = new();
+        public DrawingStyle? Style { get; set; }
     }
 }
