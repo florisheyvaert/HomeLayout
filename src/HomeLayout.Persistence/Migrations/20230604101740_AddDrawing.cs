@@ -17,9 +17,9 @@ namespace HomeLayout.Persistence.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    FillColor = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    StrokeColor = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    StrokeWidth = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
+                    FillColor = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    StrokeColor = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    StrokeWidth = table.Column<decimal>(type: "decimal(18,2)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -34,9 +34,9 @@ namespace HomeLayout.Persistence.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Top = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     Left = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    Width = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    Height = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    Radius = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    Width = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    Height = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    Radius = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
                     Shape = table.Column<int>(type: "int", nullable: false),
                     StyleId = table.Column<int>(type: "int", nullable: true)
                 },

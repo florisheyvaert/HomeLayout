@@ -30,13 +30,13 @@ namespace HomeLayout.Persistence.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<decimal>("Height")
+                    b.Property<decimal?>("Height")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("Left")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<decimal>("Radius")
+                    b.Property<decimal?>("Radius")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("Shape")
@@ -48,7 +48,7 @@ namespace HomeLayout.Persistence.Migrations
                     b.Property<decimal>("Top")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<decimal>("Width")
+                    b.Property<decimal?>("Width")
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
@@ -67,7 +67,6 @@ namespace HomeLayout.Persistence.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("FillColor")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
@@ -75,10 +74,9 @@ namespace HomeLayout.Persistence.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("StrokeColor")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<decimal>("StrokeWidth")
+                    b.Property<decimal?>("StrokeWidth")
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");

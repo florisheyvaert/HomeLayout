@@ -1,4 +1,5 @@
 ﻿using HomeLayout.Common.Interfaces;
+using HomeLayout.Common.Static;
 using HomeLayout.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -19,6 +20,32 @@ namespace HomeLayout.Persistence
         public HomeLayoutDbContext(DbContextOptions<HomeLayoutDbContext> options) : base(options)
         {
 
+        }
+
+        public void SeedData()
+        {
+            if (!DrawingStyle.Any())
+            {
+                DrawingStyle.AddRange(new List<DrawingStyle>()
+                {
+                    new()
+                    {
+                        FillColor = "#F00",
+                        StrokeWidth = 1,
+                        StrokeColor = "#FF0",
+                        Name = DrawingStyles.InnerWall
+                    },
+                    new()
+                    {
+                        FillColor = "#FF0",
+                        StrokeWidth = 1,
+                        StrokeColor = "#0F0",
+                        Name = DrawingStyles.OuterWall
+                    }
+                });
+            }
+
+            SaveChanges();
         }
     }
 }

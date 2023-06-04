@@ -57,6 +57,11 @@ namespace HomeLayout.Application.Clients
                 throw new Exception($"Error while getting {nameof(T)} with id '{id}' ('{request.StatusCode}': '{content}'");
             }
 
+            if (request.StatusCode == System.Net.HttpStatusCode.NoContent)
+            {
+                return default;
+            }
+
             var result = JsonSerializer.Deserialize<T>(content, new JsonSerializerOptions() { PropertyNameCaseInsensitive = true });
             return result;
         }

@@ -29,6 +29,8 @@ namespace HomeLayout.Persistence
             var dbContext = scope.ServiceProvider.GetRequiredService<HomeLayoutDbContext>();
             dbContext.Database.Migrate();
 
+            dbContext.SeedData();
+
             return app;
         }
     }

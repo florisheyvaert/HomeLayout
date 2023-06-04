@@ -14,9 +14,9 @@ namespace HomeLayout.Common.Models
 
         public decimal Top { get; set; }
         public decimal Left { get; set; }
-        public decimal Width { get; set; }
-        public decimal Height { get; set; }
-        public decimal Radius { get; set; }
+        public decimal? Width { get; set; }
+        public decimal? Height { get; set; }
+        public decimal? Radius { get; set; }
         public Shape Shape { get; set; }
 
         public int? StyleId { get; set; }

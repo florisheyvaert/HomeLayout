@@ -13,6 +13,8 @@ namespace HomeLayout.Common.Interfaces
         DbSet<Drawing> Drawing { get; set; }
         DbSet<DrawingStyle> DrawingStyle { get; set; }
 
+        void SeedData();
+
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }
 }
