@@ -17,6 +17,8 @@ namespace HomeLayout.Common.Models
         public decimal? Width { get; set; }
         public decimal? Height { get; set; }
         public decimal? Radius { get; set; }
+        public decimal? ScaleX { get; set; }
+        public decimal? ScaleY { get; set; }
         public Shape Shape { get; set; }
 
         public int? StyleId { get; set; }

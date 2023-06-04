@@ -16,7 +16,7 @@ namespace HomeLayout.Persistence.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     FillColor = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     StrokeColor = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     StrokeWidth = table.Column<decimal>(type: "decimal(18,2)", nullable: true)
@@ -37,6 +37,8 @@ namespace HomeLayout.Persistence.Migrations
                     Width = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
                     Height = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
                     Radius = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    ScaleX = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    ScaleY = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
                     Shape = table.Column<int>(type: "int", nullable: false),
                     StyleId = table.Column<int>(type: "int", nullable: true)
                 },

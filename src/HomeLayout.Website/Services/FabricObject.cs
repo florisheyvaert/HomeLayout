@@ -45,8 +45,6 @@ namespace HomeLayout.Website.Services
         //"hasBorders" : true,
         //"hasControls" : true,
         //"hasRotatingPoint" : false,
-        //"height" : 20,
-        //"left" : 50,
         //"opacity" : 1,
         //"overlayFill" : null,
         //"perPixelTargetFind" : false,
@@ -56,10 +54,7 @@ namespace HomeLayout.Website.Services
         //"stroke" : null,
         //"strokeDashArray" : null,
         //"strokeWidth" : 1,
-        //"top" : 50,
         //"transparentCorners" : true,
-        //"type" : "rect",
-        //"width" : 20
 
         public int Id { get; set; }
         public int StyleId { get; set; }
@@ -69,6 +64,8 @@ namespace HomeLayout.Website.Services
         public decimal Width { get; set; }
         public decimal Height { get; set; }
         public decimal Radius { get; set; }
+        public decimal ScaleX { get; set; }
+        public decimal ScaleY { get; set; }
         public string Fill { get; set; }
     }
 }

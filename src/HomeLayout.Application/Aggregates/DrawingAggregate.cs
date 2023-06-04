@@ -73,8 +73,9 @@ namespace HomeLayout.Application.Aggregates
             updatedEntity.Shape = entity.Shape;
             updatedEntity.Top = entity.Top;
             updatedEntity.Width = entity.Width;
-            // todo weird update behavior, first styleid is cleared, seconds run its saved again => wtf?
-            //updatedEntity.StyleId = entity.StyleId;
+            updatedEntity.ScaleX = entity.ScaleX;
+            updatedEntity.ScaleY = entity.ScaleY;
+            updatedEntity.StyleId = entity.StyleId;
 
             RemoveRelations(updatedEntity);
 

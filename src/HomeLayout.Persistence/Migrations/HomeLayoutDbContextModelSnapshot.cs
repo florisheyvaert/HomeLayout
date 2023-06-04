@@ -39,6 +39,12 @@ namespace HomeLayout.Persistence.Migrations
                     b.Property<decimal?>("Radius")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<decimal?>("ScaleX")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("ScaleY")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<int>("Shape")
                         .HasColumnType("int");
 
@@ -70,7 +76,6 @@ namespace HomeLayout.Persistence.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("StrokeColor")
@@ -87,10 +92,15 @@ namespace HomeLayout.Persistence.Migrations
             modelBuilder.Entity("HomeLayout.Domain.Entities.Drawing", b =>
                 {
                     b.HasOne("HomeLayout.Domain.Entities.DrawingStyle", "Style")
-                        .WithMany()
+                        .WithMany("Drawings")
                         .HasForeignKey("StyleId");
 
                     b.Navigation("Style");
+                });
+
+            modelBuilder.Entity("HomeLayout.Domain.Entities.DrawingStyle", b =>
+                {
+                    b.Navigation("Drawings");
                 });
 #pragma warning restore 612, 618
         }

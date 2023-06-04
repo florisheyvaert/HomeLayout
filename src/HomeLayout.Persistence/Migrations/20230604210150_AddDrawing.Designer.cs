@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HomeLayout.Persistence.Migrations
 {
     [DbContext(typeof(HomeLayoutDbContext))]
-    [Migration("20230604101740_AddDrawing")]
+    [Migration("20230604210150_AddDrawing")]
     partial class AddDrawing
     {
         /// <inheritdoc />
@@ -40,6 +40,12 @@ namespace HomeLayout.Persistence.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal?>("Radius")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("ScaleX")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("ScaleY")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("Shape")
@@ -73,7 +79,6 @@ namespace HomeLayout.Persistence.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("StrokeColor")
@@ -90,10 +95,15 @@ namespace HomeLayout.Persistence.Migrations
             modelBuilder.Entity("HomeLayout.Domain.Entities.Drawing", b =>
                 {
                     b.HasOne("HomeLayout.Domain.Entities.DrawingStyle", "Style")
-                        .WithMany()
+                        .WithMany("Drawings")
                         .HasForeignKey("StyleId");
 
                     b.Navigation("Style");
+                });
+
+            modelBuilder.Entity("HomeLayout.Domain.Entities.DrawingStyle", b =>
+                {
+                    b.Navigation("Drawings");
                 });
 #pragma warning restore 612, 618
         }
