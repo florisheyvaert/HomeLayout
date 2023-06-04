@@ -1,4 +1,5 @@
 ﻿using HomeLayout.Application.Aggregates;
+using HomeLayout.Application.Clients;
 using HomeLayout.Application.Commands;
 using HomeLayout.Application.Messages;
 using HomeLayout.Application.WebSocket;
@@ -27,6 +28,19 @@ namespace HomeLayout.Application
             return services;
         }
 
+        public static IServiceCollection AddApplication_Web(this IServiceCollection services, IConfiguration configuration)
+        {
+            var settings = new AppSettings();
+            configuration.GetSection(nameof(AppSettings)).Bind(settings);
+            services.Configure<AppSettings>(configuration.GetSection(nameof(AppSettings)));
+
+            services.AddAutoMapper(Assembly.GetExecutingAssembly());
+
+            services.AddHttpClient<IDrawingAggregate, DrawingClient>(WireUpClient(settings));
+
+            return services;
+        }
+
         public static IServiceCollection AddApplication(this IServiceCollection services, IConfiguration configuration)
         {
             var settings = new AppSettings();
@@ -48,6 +62,14 @@ namespace HomeLayout.Application
             services.AddTransient<MessageHandler>();
 
             return services;
+        }
+
+        private static Action<HttpClient> WireUpClient(AppSettings settings)
+        {
+            return x =>
+            {
+                x.BaseAddress = new Uri(settings.HomeLayoutApiUrl);
+            };
         }
     }
 }

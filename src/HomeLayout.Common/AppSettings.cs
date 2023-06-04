@@ -11,5 +11,6 @@ namespace HomeLayout.Common
         public string HomeLayoutWebSocketUrl { get; set; }
         public string HomeLayoutWebApiUrl { get; set; }
         public string HomeLayoutAccessToken { get; set; }
+        public string HomeLayoutApiUrl { get; set; }
     }
 }

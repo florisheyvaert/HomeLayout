@@ -1,4 +1,5 @@
 ﻿using HomeLayout.Common.Interfaces;
+using HomeLayout.Common.Models;
 using HomeLayout.Domain;
 using HomeLayout.Domain.States;
 using HomeLayout.Website.Services;
@@ -11,9 +12,29 @@ namespace HomeLayout.Website.Pages
     public partial class Home
     {
         [Inject] public IDrawer Drawer { get; set; }
+        [Inject] public IDrawingAggregate DrawingAggregate { get; set; }
+
+        public List<DrawingModel> Drawings { get; private set; }
 
         protected override async Task OnInitializedAsync()
         {
+            var testDrawing = new DrawingModel()
+            {
+                Height = 200,
+                Left = 200,
+                Shape = Domain.ValueObjects.Shape.Triangle
+            };
+
+            var addedDrawing = await DrawingAggregate.Add(testDrawing);
+
+            addedDrawing.Height = 400;
+
+            var updatedDrawing = await DrawingAggregate.Update(addedDrawing);
+
+            var deletedDrawing = await DrawingAggregate.Delete(addedDrawing.Id);
+
+            Drawings = await DrawingAggregate.GetAll();
+            var drawing = await DrawingAggregate.Get(3);
             await base.OnInitializedAsync();
         }
 

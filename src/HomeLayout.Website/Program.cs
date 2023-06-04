@@ -19,8 +19,9 @@ internal class Program
             // Add services to the container.
             builder.Services.AddRazorPages();
             builder.Services.AddServerSideBlazor();
-            builder.Services.AddApplication(builder.Configuration);
-            builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
+            builder.Services.AddApplication_Web(builder.Configuration);
+            //builder.Services.AddApplication(builder.Configuration);
+            //builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
 
             builder.Services.AddTransient<IDrawer, Fabric>();
 
