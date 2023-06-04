@@ -4,13 +4,17 @@ var customFabric = {
 
     Initialize: function (canvasId) {
 
-        this.canvas = new fabric.Canvas(canvasId);
+        this.canvas = new fabric.Canvas(canvasId, {
+            selection: false
+        });
 
         window.addEventListener('resize', this.OnResize, false);
 
         this.OnResize();
 
         this.LoadZoomAndPanning();
+
+        //this.SnapToGrid();
     },
 
     AddDrawing: function (drawing) {
@@ -60,6 +64,51 @@ var customFabric = {
     Map: function (fabricObject, drawing) {
         fabricObject.id = drawing.id;
         fabricObject.styleId = drawing.styleId;
+    },
+
+    ToggleEdit: function (enabled) {
+
+        this.canvas.forEachObject(function (object) {
+            object.selectable = enabled;
+
+            if (object.type == "line") {
+                object.opacity = enabled ? 0.25 : 0;
+            }
+
+        });
+
+        if (!enabled) {
+            this.canvas.discardActiveObject();
+        }
+
+        this.canvas.renderAll();
+    },
+
+    SnapToGrid: function () {
+
+        var grid = 30;
+
+        for (var i = 0; i < (window.innerWidth / grid); i++) {
+            this.canvas.add(new fabric.Line([i * grid, 0, i * grid, window.innerWidth], {
+                stroke: '#ccc',
+                opacity: 0,
+                selectable: false
+            }));
+            this.canvas.add(new fabric.Line([0, i * grid, window.innerWidth, i * grid], {
+                stroke: '#ccc',
+                opacity: 0,
+                selectable: false
+            }))
+        }
+
+        this.canvas.on('object:moving', function (options) {
+            if (Math.round(options.target.left / grid * 4) % 4 == 0 && Math.round(options.target.top / grid * 4) % 4 == 0) {
+                options.target.set({
+                    left: Math.round(options.target.left / grid) * grid,
+                    top: Math.round(options.target.top / grid) * grid
+                }).setCoords();
+            }
+        });
     },
 
     LoadZoomAndPanning: function () {

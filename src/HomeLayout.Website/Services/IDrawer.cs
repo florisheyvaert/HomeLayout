@@ -5,6 +5,7 @@ namespace HomeLayout.Website.Services
     public interface IDrawer
     {
         Task OnInitializedAsync();
+        Task ToggleEdit(bool editable);
         Task Draw(DrawingModel drawing);
         Task Import(List<DrawingModel> drawings);
         Task<List<DrawingModel>> Export();

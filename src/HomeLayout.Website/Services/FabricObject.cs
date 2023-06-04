@@ -48,8 +48,6 @@ namespace HomeLayout.Website.Services
         //"opacity" : 1,
         //"overlayFill" : null,
         //"perPixelTargetFind" : false,
-        //"scaleX" : 1,
-        //"scaleY" : 1,
         //"selectable" : true,
         //"stroke" : null,
         //"strokeDashArray" : null,

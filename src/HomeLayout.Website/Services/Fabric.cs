@@ -62,5 +62,12 @@ namespace HomeLayout.Website.Services
             if (!_isInitialized)
                 throw new ArgumentException("Initialize the canvas first");
         }
+
+        public async Task ToggleEdit(bool editable)
+        {
+            InitializedCheck();
+
+            await _js.InvokeVoidAsync($"{_jsNameSpace}.ToggleEdit", editable);
+        }
     }
 }

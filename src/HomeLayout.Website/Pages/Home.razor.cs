@@ -13,6 +13,8 @@ namespace HomeLayout.Website.Pages
 {
     public partial class Home
     {
+        private bool _editMode = false;
+
         [Inject] public IDrawer Drawer { get; set; }
         [Inject] public IDrawingAggregate DrawingAggregate { get; set; }
         [Inject] public IDrawingStyleAggregate DrawingStyleAggregate { get; set; }
@@ -54,8 +56,10 @@ namespace HomeLayout.Website.Pages
             {
                 Left = 10,
                 Top = 10,
-                Width = 50,
-                Height = 50,
+                Width = 30,
+                Height = 30,
+                ScaleX = 1,
+                ScaleY = 1,
                 Style = drawingStyle,
                 StyleId = drawingStyle.Id
             };
@@ -79,6 +83,12 @@ namespace HomeLayout.Website.Pages
             Drawings = drawings;
 
             StateHasChanged();
+        }
+
+        private async Task ToggleEdit()
+        {
+            _editMode = !_editMode;
+            await Drawer.ToggleEdit(_editMode);
         }
     }
 }
