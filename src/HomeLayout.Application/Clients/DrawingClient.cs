@@ -18,27 +18,27 @@ namespace HomeLayout.Application.Clients
 
         public Task<DrawingModel> Add(DrawingModel item)
         {
-            return base.Add(item);
+            return base.Add(EndPoints.Drawing_Add, item);
         }
 
         public Task<DrawingModel> Delete(int id)
         {
-            return base.Delete(id);
+            return base.Delete(EndPoints.Drawing_Delete.Resolve("id", id), id);
         }
 
         public Task<DrawingModel> Get(int id, CancellationToken cancellationToken = default)
         {
-            return base.Get(id, cancellationToken);
+            return base.Get(EndPoints.Drawing_Get.Resolve("id", id), id, cancellationToken);
         }
 
         public Task<List<DrawingModel>> GetAll(CancellationToken cancellationToken = default)
         {
-            return base.GetAll(cancellationToken);
+            return base.GetAll(EndPoints.Drawing_GetAll, cancellationToken);
         }
 
         public Task<DrawingModel> Update(DrawingModel item)
         {
-            return base.Update(item);
+            return base.Update(EndPoints.Drawing_Update, item);
         }
     }
 }

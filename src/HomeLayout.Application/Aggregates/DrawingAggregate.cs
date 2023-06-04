@@ -44,14 +44,20 @@ namespace HomeLayout.Application.Aggregates
 
         public async Task<DrawingModel> Get(int id, CancellationToken cancellationToken = default)
         {
-            var entity = await _context.Drawing.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+            var entity = await _context.Drawing
+                .Include(x => x.Style)
+                .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
             var model = _mapper.Map<DrawingModel>(entity);
             return model;
         }
 
         public async Task<List<DrawingModel>> GetAll(CancellationToken cancellationToken = default)
         {
-            var entities = await _context.Drawing.ToListAsync(cancellationToken);
+            var entities = await _context.Drawing
+                .Include(x => x.Style)
+                .ToListAsync(cancellationToken);
+
             var models = _mapper.Map<List<DrawingModel>>(entities);
             return models;
         }
@@ -65,10 +71,11 @@ namespace HomeLayout.Application.Aggregates
             updatedEntity.Height = entity.Height;
             updatedEntity.Radius = entity.Radius;
             updatedEntity.Shape = entity.Shape;
-            updatedEntity.StyleId = entity.StyleId;
             updatedEntity.Top = entity.Top;
             updatedEntity.Width = entity.Width;
-            
+            // todo weird update behavior, first styleid is cleared, seconds run its saved again => wtf?
+            //updatedEntity.StyleId = entity.StyleId;
+
             RemoveRelations(updatedEntity);
 
             await _context.SaveChangesAsync();

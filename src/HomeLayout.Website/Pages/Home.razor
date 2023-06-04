@@ -9,11 +9,15 @@
     <div class="d-flex justify-content-center align-items-center w-100 h-100 p-2">
 
         <div class="p-2">
-            <button class="p-2">Add Inner Wall</button>
+            <button class="p-2" @onclick="async() => await AddDrawing(Common.Static.DrawingStyles.InnerWall)">Add Inner Wall</button>
         </div>
 
         <div class="p-2">
-            <button class="p-2">Add Outer Wall</button>
+            <button class="p-2" @onclick="async() => await AddDrawing(Common.Static.DrawingStyles.OuterWall)">Add Outer Wall</button>
+        </div>
+
+        <div class="p-2">
+            <button class="p-2" @onclick="async() => await Save()">Save</button>
         </div>
 
     </div>

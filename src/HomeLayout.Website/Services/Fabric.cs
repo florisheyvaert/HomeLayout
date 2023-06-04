@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using HomeLayout.Common.Models;
 using Microsoft.JSInterop;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -25,7 +26,7 @@ namespace HomeLayout.Website.Services
             _isInitialized = true;
         }
 
-        public async Task Draw(Drawing drawing)
+        public async Task Draw(DrawingModel drawing)
         {
             InitializedCheck();
 
@@ -34,15 +35,26 @@ namespace HomeLayout.Website.Services
             await _js.InvokeVoidAsync($"{_jsNameSpace}.AddDrawing", fabricObject);
         }
 
-        public async Task<List<Drawing>> Export()
+        public async Task<List<DrawingModel>> Export()
         {
             InitializedCheck();
 
             var output = await _js.InvokeAsync<string>($"{_jsNameSpace}.ExportJson");
             var export = JsonSerializer.Deserialize<FabricObjectExport>(output, options: new() { PropertyNameCaseInsensitive = true });
-            var mapped = _mapper.Map<List<Drawing>>(export.Objects);
+            var mapped = _mapper.Map<List<DrawingModel>>(export.Objects);
 
             return mapped;
+        }
+
+        public async Task Import(List<DrawingModel> drawings)
+        {
+            InitializedCheck();
+
+            var mapped = _mapper.Map<List<FabricObject>>(drawings);
+            var export = new FabricObjectExport() { Objects = mapped };
+            var import = JsonSerializer.Serialize(export, new JsonSerializerOptions() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+            
+            await _js.InvokeAsync<string>($"{_jsNameSpace}.ImportJson", import);
         }
 
         private void InitializedCheck()

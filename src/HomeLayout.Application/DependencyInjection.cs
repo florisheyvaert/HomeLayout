@@ -24,6 +24,7 @@ namespace HomeLayout.Application
             services.AddAutoMapper(Assembly.GetExecutingAssembly());
 
             services.AddTransient<IDrawingAggregate, DrawingAggregate>();
+            services.AddTransient<IDrawingStyleAggregate, DrawingStyleAggregate>();
 
             return services;
         }
@@ -34,9 +35,10 @@ namespace HomeLayout.Application
             configuration.GetSection(nameof(AppSettings)).Bind(settings);
             services.Configure<AppSettings>(configuration.GetSection(nameof(AppSettings)));
 
-            services.AddAutoMapper(Assembly.GetExecutingAssembly());
+            services.AddAutoMapper(Assembly.GetExecutingAssembly(), Assembly.GetEntryAssembly());
 
             services.AddHttpClient<IDrawingAggregate, DrawingClient>(WireUpClient(settings));
+            services.AddHttpClient<IDrawingStyleAggregate, DrawingStyleClient>(WireUpClient(settings));
 
             return services;
         }

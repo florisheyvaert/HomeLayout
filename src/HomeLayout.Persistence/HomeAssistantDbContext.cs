@@ -22,6 +22,13 @@ namespace HomeLayout.Persistence
 
         }
 
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Drawing>().HasOne(x => x.Style).WithMany(x => x.Drawings).HasForeignKey(x => x.StyleId);
+
+            base.OnModelCreating(modelBuilder);
+        }
+
         public void SeedData()
         {
             if (!DrawingStyle.Any())

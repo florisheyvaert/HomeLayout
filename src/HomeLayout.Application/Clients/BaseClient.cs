@@ -18,7 +18,7 @@ namespace HomeLayout.Application.Clients
             _client = client;
         }
 
-        public async Task<T> Add(T item)
+        public async Task<T> Add(string endPoint, T item)
         {
             var body = new StringContent(JsonSerializer.Serialize(item), Encoding.UTF8, "application/json");
             var request = await _client.PostAsync(EndPoints.Drawing_Add, body);
@@ -33,9 +33,9 @@ namespace HomeLayout.Application.Clients
             return result;
         }
 
-        public async Task<T> Delete(int id)
+        public async Task<T> Delete(string endPoint, int id)
         {
-            var request = await _client.DeleteAsync(EndPoints.Drawing_Delete.Resolve("id", id));
+            var request = await _client.DeleteAsync(endPoint);
             var content = await request.Content.ReadAsStringAsync();
 
             if (!request.IsSuccessStatusCode)
@@ -47,9 +47,9 @@ namespace HomeLayout.Application.Clients
             return result;
         }
 
-        public async Task<T> Get(int id, CancellationToken cancellationToken = default)
+        public async Task<T> Get(string endPoint, int id, CancellationToken cancellationToken = default)
         {
-            var request = await _client.GetAsync(EndPoints.Drawing_Get.Resolve("id", id), cancellationToken);
+            var request = await _client.GetAsync(endPoint, cancellationToken);
             var content = await request.Content.ReadAsStringAsync();
 
             if (!request.IsSuccessStatusCode)
@@ -66,9 +66,9 @@ namespace HomeLayout.Application.Clients
             return result;
         }
 
-        public async Task<List<T>> GetAll(CancellationToken cancellationToken = default)
+        public async Task<List<T>> GetAll(string endPoint, CancellationToken cancellationToken = default)
         {
-            var request = await _client.GetAsync(EndPoints.Drawing_GetAll, cancellationToken);
+            var request = await _client.GetAsync(endPoint, cancellationToken);
             var content = await request.Content.ReadAsStringAsync();
 
             if (!request.IsSuccessStatusCode)
@@ -80,10 +80,10 @@ namespace HomeLayout.Application.Clients
             return result;
         }
 
-        public async Task<T> Update(T item)
+        public async Task<T> Update(string endPoint, T item)
         {
             var body = new StringContent(JsonSerializer.Serialize(item), Encoding.UTF8, "application/json");
-            var request = await _client.PutAsync(EndPoints.Drawing_Update, body);
+            var request = await _client.PutAsync(endPoint, body);
             var content = await request.Content.ReadAsStringAsync();
 
             if (!request.IsSuccessStatusCode)

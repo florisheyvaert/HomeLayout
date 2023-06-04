@@ -14,5 +14,7 @@ namespace HomeLayout.Domain.Entities
         public string? FillColor { get; set; }
         public string? StrokeColor { get; set; }
         public decimal? StrokeWidth { get; set; }
+
+        public List<Drawing> Drawings { get; set; }
     }
 }

@@ -1,4 +1,6 @@
 ﻿using AutoMapper;
+using HomeLayout.Common.Models;
+using HomeLayout.Domain.ValueObjects;
 
 namespace HomeLayout.Website.Services
 {
@@ -8,7 +10,7 @@ namespace HomeLayout.Website.Services
 
         public FabricObjectProfile()
         {
-            CreateMap<Drawing, FabricObject>()
+            CreateMap<DrawingModel, FabricObject>()
                 .ForMember(x => x.Type, opts => opts.MapFrom(y => Translate(y.Shape)))
                 .ForMember(x => x.Fill, opts => opts.MapFrom(y => string.IsNullOrWhiteSpace(y.Style.FillColor) ? _defaultStrokeColor : y.Style.FillColor))
                 .ForMember(x => x.StyleId, opts => opts.MapFrom(y => y.Style.Id))

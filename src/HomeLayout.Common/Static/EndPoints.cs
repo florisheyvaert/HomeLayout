@@ -14,6 +14,12 @@ namespace HomeLayout.Common.Static
         public const string Drawing_Update = "api/drawing";
         public const string Drawing_Delete = "api/drawing/{id}";
 
+        public const string DrawingStyle_GetAll = "api/drawingstyle/getall";
+        public const string DrawingStyle_Get = "api/drawingstyle/{id}";
+        public const string DrawingStyle_Add = "api/drawingstyle/";
+        public const string DrawingStyle_Update = "api/drawingstyle";
+        public const string DrawingStyle_Delete = "api/drawingstyle/{id}";
+
         public static string Resolve(this string url, string replace, object replaceValue)
         {
             return url.Replace($"{{{replace}}}", replaceValue.ToString());
