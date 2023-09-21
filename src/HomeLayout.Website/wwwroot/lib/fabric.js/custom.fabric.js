@@ -14,7 +14,7 @@ var customFabric = {
 
         this.LoadZoomAndPanning();
 
-        //this.SnapToGrid();
+        this.SnapToGrid();
     },
 
     AddDrawing: function (drawing) {
@@ -48,6 +48,7 @@ var customFabric = {
     },
 
     ExportJson: function () {
+        console.log(JSON.stringify(this.canvas));
         return JSON.stringify(this.canvas);
     },
 
@@ -72,6 +73,7 @@ var customFabric = {
             object.selectable = enabled;
 
             if (object.type == "line") {
+                object.selectable = false;
                 object.opacity = enabled ? 0.25 : 0;
             }
 
@@ -86,18 +88,20 @@ var customFabric = {
 
     SnapToGrid: function () {
 
-        var grid = 30;
+        var grid = 20;
 
         for (var i = 0; i < (window.innerWidth / grid); i++) {
             this.canvas.add(new fabric.Line([i * grid, 0, i * grid, window.innerWidth], {
-                stroke: '#ccc',
+                stroke: '#FFF',
                 opacity: 0,
-                selectable: false
+                selectable: false,
+                excludeFromExport: true
             }));
             this.canvas.add(new fabric.Line([0, i * grid, window.innerWidth, i * grid], {
-                stroke: '#ccc',
+                stroke: '#FFF',
                 opacity: 0,
-                selectable: false
+                selectable: false,
+                excludeFromExport: true
             }))
         }
 

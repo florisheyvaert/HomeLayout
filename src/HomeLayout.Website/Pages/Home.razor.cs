@@ -56,8 +56,8 @@ namespace HomeLayout.Website.Pages
             {
                 Left = 10,
                 Top = 10,
-                Width = 30,
-                Height = 30,
+                Width = 20,
+                Height = 20,
                 ScaleX = 1,
                 ScaleY = 1,
                 Style = drawingStyle,

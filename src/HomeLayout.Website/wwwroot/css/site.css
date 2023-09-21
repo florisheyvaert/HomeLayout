@@ -83,7 +83,7 @@ p, h1, h2, h3, h4, h5, h6 {
 .main {
     /*background: url('../images/background_1.png');
     background-size: cover;*/
-    background-color: #161616;
+    background-color: #111;
     color: var(--primary-font-color);
 }
 
