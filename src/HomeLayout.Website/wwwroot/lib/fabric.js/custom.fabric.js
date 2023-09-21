@@ -1,6 +1,7 @@
 var customFabric = {
 
     canvas: {},
+    snapToGridSize: 5,
 
     Initialize: function (canvasId) {
 
@@ -57,9 +58,9 @@ var customFabric = {
     },
 
     OnResize: function () {
-        this.canvas.setHeight(window.innerHeight);
-        this.canvas.setWidth(window.innerWidth);
-        this.canvas.renderAll();
+        customFabric.canvas.setHeight(window.innerHeight);
+        customFabric.canvas.setWidth(window.innerWidth);
+        customFabric.canvas.renderAll();
     },
 
     Map: function (fabricObject, drawing) {
@@ -68,6 +69,29 @@ var customFabric = {
     },
 
     ToggleEdit: function (enabled) {
+
+        if (enabled) {
+            for (var i = 0; i < (window.innerWidth / customFabric.snapToGridSize); i++) {
+                this.canvas.add(new fabric.Line([i * customFabric.snapToGridSize, 0, i * customFabric.snapToGridSize, window.innerWidth], {
+                    stroke: '#FFF',
+                    opacity: 0,
+                    selectable: false,
+                    excludeFromExport: true
+                }));
+                this.canvas.add(new fabric.Line([0, i * customFabric.snapToGridSize, window.innerWidth, i * customFabric.snapToGridSize], {
+                    stroke: '#FFF',
+                    opacity: 0,
+                    selectable: false,
+                    excludeFromExport: true
+                }))
+            }
+        } else {
+            var objects = customFabric.canvas.getObjects('line');
+            for (let i in objects) {
+                customFabric.canvas.remove(objects[i]);
+            }
+            customFabric.canvas.renderAll();
+        }
 
         this.canvas.forEachObject(function (object) {
             object.selectable = enabled;
@@ -87,29 +111,11 @@ var customFabric = {
     },
 
     SnapToGrid: function () {
-
-        var grid = 20;
-
-        for (var i = 0; i < (window.innerWidth / grid); i++) {
-            this.canvas.add(new fabric.Line([i * grid, 0, i * grid, window.innerWidth], {
-                stroke: '#FFF',
-                opacity: 0,
-                selectable: false,
-                excludeFromExport: true
-            }));
-            this.canvas.add(new fabric.Line([0, i * grid, window.innerWidth, i * grid], {
-                stroke: '#FFF',
-                opacity: 0,
-                selectable: false,
-                excludeFromExport: true
-            }))
-        }
-
         this.canvas.on('object:moving', function (options) {
-            if (Math.round(options.target.left / grid * 4) % 4 == 0 && Math.round(options.target.top / grid * 4) % 4 == 0) {
+            if (Math.round(options.target.left / customFabric.snapToGridSize * 4) % 4 == 0 && Math.round(options.target.top / customFabric.snapToGridSize * 4) % 4 == 0) {
                 options.target.set({
-                    left: Math.round(options.target.left / grid) * grid,
-                    top: Math.round(options.target.top / grid) * grid
+                    left: Math.round(options.target.left / customFabric.snapToGridSize) * customFabric.snapToGridSize,
+                    top: Math.round(options.target.top / customFabric.snapToGridSize) * customFabric.snapToGridSize
                 }).setCoords();
             }
         });
@@ -122,10 +128,10 @@ var customFabric = {
                     pausePanning = true;
                     var point = new fabric.Point(e.self.x, e.self.y);
                     if (e.self.state == "start") {
-                        zoomStartScale = canvas.getZoom();
+                        zoomStartScale = customFabric.canvas.getZoom();
                     }
                     var delta = zoomStartScale * e.self.scale;
-                    canvas.zoomToPoint(point, delta);
+                    customFabric.canvas.zoomToPoint(point, delta);
                     pausePanning = false;
                 }
             },
@@ -144,12 +150,49 @@ var customFabric = {
 
                     if ((Math.abs(currentX - lastX) <= 50) && (Math.abs(currentY - lastY) <= 50)) {
                         var delta = new fabric.Point(xChange, yChange);
-                        canvas.relativePan(delta);
+                        customFabric.canvas.relativePan(delta);
                     }
 
                     lastX = e.self.x;
                     lastY = e.self.y;
                 }
+            },
+            'mouse:wheel': function (opt) {
+                var delta = opt.e.deltaY;
+                var zoom = customFabric.canvas.getZoom();
+                zoom *= 0.999 ** delta;
+                if (zoom > 20) zoom = 20;
+                if (zoom < 0.01) zoom = 0.01;
+                customFabric.canvas.setZoom(zoom);
+                opt.e.preventDefault();
+                opt.e.stopPropagation();
+            },
+            'mouse:down': function (opt) {
+                var evt = opt.e;
+                if (evt.ctrlKey === true) {
+                    this.isDragging = true;
+                    this.selection = false;
+                    this.lastPosX = evt.clientX;
+                    this.lastPosY = evt.clientY;
+                }
+            },
+            'mouse:move': function (opt) {
+                if (this.isDragging) {
+                    var e = opt.e;
+                    var vpt = this.viewportTransform;
+                    vpt[4] += e.clientX - this.lastPosX;
+                    vpt[5] += e.clientY - this.lastPosY;
+                    this.requestRenderAll();
+                    this.lastPosX = e.clientX;
+                    this.lastPosY = e.clientY;
+                }
+            },
+            'mouse:up': function(opt) {
+                // on mouse up we want to recalculate new interaction
+                // for all objects, so we call setViewportTransform
+                this.setViewportTransform(this.viewportTransform);
+                this.isDragging = false;
+                this.selection = true;
             }
         });
     }
