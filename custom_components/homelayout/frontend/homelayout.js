@@ -24670,7 +24670,7 @@ function wb({ hass: t }) {
                   /* @__PURE__ */ v.jsx(
                     "img",
                     {
-                      src: "/logo.svg",
+                      src: "/homelayout_panel/logo.svg",
                       alt: "HomeLayout",
                       style: { height: 32, width: "auto" }
                     }

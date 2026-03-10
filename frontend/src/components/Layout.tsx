@@ -1018,7 +1018,7 @@ export function Layout({ hass }: LayoutProps) {
           }}
         >
           <img
-            src="/logo.svg"
+            src="/homelayout_panel/logo.svg"
             alt="HomeLayout"
             style={{ height: 32, width: "auto" }}
           />
