@@ -24104,8 +24104,8 @@ function wb({ hass: t }) {
             fontFamily: Nr,
             backgroundColor: "var(--fp-bg)",
             color: "var(--fp-text)",
-            width: "100vw",
-            height: "100vh",
+            width: "100%",
+            height: "100%",
             display: "flex",
             alignItems: "center",
             justifyContent: "center"
@@ -24124,8 +24124,8 @@ function wb({ hass: t }) {
             fontFamily: Nr,
             backgroundColor: "var(--fp-bg)",
             color: "var(--fp-text)",
-            width: "100vw",
-            height: "100vh",
+            width: "100%",
+            height: "100%",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
@@ -24194,8 +24194,8 @@ function wb({ hass: t }) {
           ...Po,
           fontFamily: Nr,
           position: "relative",
-          width: "100vw",
-          height: "100vh",
+          width: "100%",
+          height: "100%",
           overflow: "hidden",
           backgroundColor: "var(--fp-bg)",
           color: "var(--fp-text)"
@@ -24777,7 +24777,7 @@ class Mb extends HTMLElement {
     const n = this.attachShadow({ mode: "open" }), r = document.createElement("style");
     r.textContent = kb, n.appendChild(r);
     const o = document.createElement("div");
-    o.id = "root", o.style.height = "100%", n.appendChild(o), this._root = og(o), this._render();
+    o.id = "root", o.style.height = "100%", o.style.width = "100%", o.style.overflow = "hidden", n.appendChild(o), this._root = og(o), this._render();
   }
   disconnectedCallback() {
     var n;
