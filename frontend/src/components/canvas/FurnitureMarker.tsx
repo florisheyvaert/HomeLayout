@@ -1,5 +1,6 @@
-import { useState, useRef, useMemo, useCallback } from "react";
+import { useState, useRef, useMemo, useCallback, useEffect } from "react";
 import { Group, Rect, Circle } from "react-konva";
+import Konva from "konva";
 import type { FurniturePlacement, CanvasTool } from "../../types";
 import { useThemeConfig, KonvaIcon, BRAND } from "../../theme";
 
@@ -58,6 +59,22 @@ export function FurnitureMarker({
   const [isDragging, setIsDragging] = useState(false);
   const [resizePreview, setResizePreview] = useState<ResizePreview | null>(null);
   const resizingRef = useRef(false);
+  const outerRef = useRef<Konva.Group>(null);
+  const prevEditRef = useRef(isEditMode);
+
+  // Smooth opacity transition on edit mode toggle
+  useEffect(() => {
+    if (prevEditRef.current === isEditMode) return;
+    prevEditRef.current = isEditMode;
+    const node = outerRef.current;
+    if (!node) return;
+    new Konva.Tween({
+      node,
+      duration: 0.3,
+      opacity: isEditMode ? 1 : 0.35,
+      easing: Konva.Easings.EaseOut,
+    }).play();
+  }, [isEditMode]);
 
   const baseW = placement.width;
   const baseH = placement.height;
@@ -107,6 +124,7 @@ export function FurnitureMarker({
 
   return (
     <Group
+      ref={outerRef}
       x={placement.x + (groupDragOffset?.x ?? 0) + worldPreviewDx}
       y={placement.y + (groupDragOffset?.y ?? 0) + worldPreviewDy}
       rotation={placement.rotation}

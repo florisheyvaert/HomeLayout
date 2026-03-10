@@ -51,7 +51,7 @@ const fabBase = (isDark: boolean): React.CSSProperties => ({
   color: isDark ? "#e1e1e1" : "#212121",
   pointerEvents: "auto",
   outline: "none",
-  transition: "background 0.15s",
+  transition: "all 0.2s cubic-bezier(0.32, 0.72, 0, 1)",
   ...glass(isDark),
 });
 
@@ -729,38 +729,39 @@ export function Layout({ hass }: LayoutProps) {
         </div>
 
         {/* ── Helper text toast ── */}
-        {helperText && (
-          <div
-            style={{
-              position: "absolute",
-              top: 64,
-              left: "50%",
-              transform: "translateX(-50%)",
-              padding: "6px 16px",
-              borderRadius: 20,
-              fontSize: 12,
-              whiteSpace: "nowrap",
-              color: isDark ? "#9e9e9e" : "#727272",
-              pointerEvents: "none",
-              ...glass(isDark),
-            }}
-          >
-            {helperText}
-          </div>
-        )}
+        <div
+          style={{
+            position: "absolute",
+            top: 64,
+            left: "50%",
+            transform: `translateX(-50%) translateY(${helperText ? 0 : -8}px)`,
+            padding: "6px 16px",
+            borderRadius: 20,
+            fontSize: 12,
+            whiteSpace: "nowrap",
+            color: isDark ? "#9e9e9e" : "#727272",
+            pointerEvents: "none",
+            opacity: helperText ? 1 : 0,
+            transition: "opacity 0.3s cubic-bezier(0.32, 0.72, 0, 1), transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)",
+            ...glass(isDark),
+          }}
+        >
+          {helperText ?? "\u00A0"}
+        </div>
 
         {/* ── Left: Edit tools ── */}
-        {mode === "edit" && (
           <div
             style={{
               position: "absolute",
               left: 12,
               top: "50%",
-              transform: "translateY(-50%)",
+              transform: `translateY(-50%) translateX(${mode === "edit" ? 0 : -20}px)`,
               display: "flex",
               flexDirection: "column",
               gap: 8,
-              pointerEvents: "auto",
+              pointerEvents: mode === "edit" ? "auto" : "none",
+              opacity: mode === "edit" ? 1 : 0,
+              transition: "opacity 0.3s cubic-bezier(0.32, 0.72, 0, 1), transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)",
             }}
           >
             {/* Tool group */}
@@ -889,7 +890,6 @@ export function Layout({ hass }: LayoutProps) {
               </button>
             </div>
           </div>
-        )}
 
         {/* ── Right: Reset + Zoom ── */}
         <div
@@ -905,7 +905,6 @@ export function Layout({ hass }: LayoutProps) {
           }}
         >
           {/* Reset view — only when not at default */}
-          {!isDefaultView && (
             <button
               onClick={() => canvasRef.current?.resetView()}
               title="Reset view"
@@ -914,6 +913,10 @@ export function Layout({ hass }: LayoutProps) {
                 width: 40,
                 height: 40,
                 fontSize: 16,
+                opacity: isDefaultView ? 0 : 1,
+                transform: `scale(${isDefaultView ? 0.8 : 1})`,
+                transition: "opacity 0.3s cubic-bezier(0.32, 0.72, 0, 1), transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)",
+                pointerEvents: isDefaultView ? "none" : "auto",
               }}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -921,7 +924,6 @@ export function Layout({ hass }: LayoutProps) {
                 <circle cx="12" cy="12" r="3" />
               </svg>
             </button>
-          )}
 
           {/* Rotate */}
           <button

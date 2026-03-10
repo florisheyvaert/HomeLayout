@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Group, Circle, Text } from "react-konva";
+import Konva from "konva";
 import type { EntityPlacement, HassEntity, CanvasTool } from "../../types";
 import { useThemeConfig, KonvaIcon, BRAND } from "../../theme";
 
@@ -88,6 +89,69 @@ export function EntityMarker({
 
   const size = placement.icon_size ?? effectiveIconSize ?? DEFAULT_ICON_SIZE;
   const [isDragging, setIsDragging] = useState(false);
+  const groupRef = useRef<Konva.Group>(null);
+  const prevStateRef = useRef(state);
+  const tweenRef = useRef<Konva.Tween | null>(null);
+
+  // Animate on entity state change (active ↔ inactive)
+  useEffect(() => {
+    const prev = prevStateRef.current;
+    prevStateRef.current = state;
+    if (prev === state) return;
+
+    const node = groupRef.current;
+    if (!node || isDragging) return;
+
+    const wasActive = prev === "on" || prev === "open" || prev === "playing" || prev === "unlocked";
+    const nowActive = state === "on" || state === "open" || state === "playing" || state === "unlocked";
+    if (wasActive === nowActive) return;
+
+    tweenRef.current?.destroy();
+
+    if (nowActive) {
+      // Turning ON: pulse up then settle
+      tweenRef.current = new Konva.Tween({
+        node,
+        duration: 0.15,
+        scaleX: 1.12,
+        scaleY: 1.12,
+        easing: Konva.Easings.EaseOut,
+        onFinish: () => {
+          tweenRef.current = new Konva.Tween({
+            node,
+            duration: 0.15,
+            scaleX: 1,
+            scaleY: 1,
+            easing: Konva.Easings.EaseIn,
+          });
+          tweenRef.current.play();
+        },
+      });
+      tweenRef.current.play();
+    } else {
+      // Turning OFF: subtle shrink then settle
+      tweenRef.current = new Konva.Tween({
+        node,
+        duration: 0.15,
+        scaleX: 0.92,
+        scaleY: 0.92,
+        easing: Konva.Easings.EaseOut,
+        onFinish: () => {
+          tweenRef.current = new Konva.Tween({
+            node,
+            duration: 0.15,
+            scaleX: 1,
+            scaleY: 1,
+            easing: Konva.Easings.EaseIn,
+          });
+          tweenRef.current.play();
+        },
+      });
+      tweenRef.current.play();
+    }
+
+    return () => { tweenRef.current?.destroy(); };
+  }, [state, isDragging]);
 
   const friendlyName =
     (entity?.attributes?.friendly_name as string) ??
@@ -110,6 +174,7 @@ export function EntityMarker({
 
   return (
     <Group
+      ref={groupRef}
       x={placement.x + (groupDragOffset?.x ?? 0)}
       y={placement.y + (groupDragOffset?.y ?? 0)}
       draggable={isEditMode}
