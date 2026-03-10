@@ -23484,7 +23484,10 @@ const D7 = {
   }
 }, Is = 160, G7 = 20, U7 = 4, B7 = 0, W7 = 50, Dm = "homelayout_config";
 function Ds() {
-  return crypto.randomUUID();
+  return typeof crypto < "u" && crypto.randomUUID ? crypto.randomUUID() : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (t) => {
+    const e = Math.random() * 16 | 0;
+    return (t === "x" ? e : e & 3 | 8).toString(16);
+  });
 }
 function pb() {
   try {
