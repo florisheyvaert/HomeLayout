@@ -4,17 +4,17 @@ from homeassistant.components import frontend, panel_custom
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import config_validation as cv
 
 from .const import DOMAIN
 from .store import HomeLayoutStorage
 from .websocket_api import async_register_commands
 
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
+
 PANEL_URL = f"/{DOMAIN}_panel"
 PANEL_FRONTEND_DIR = os.path.join(os.path.dirname(__file__), "frontend")
 
-
-async def async_setup(hass: HomeAssistant, config: dict) -> bool:
-    return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
