@@ -1,0 +1,389 @@
+import { useMemo } from "react";
+import type {
+  Room,
+  HaArea,
+  LabelVertical,
+  LabelHorizontal,
+  FloorConfig,
+  HomeAssistant,
+  EntityPlacement,
+  HaEntityRegistryEntry,
+  Point,
+} from "../../types";
+import { useThemeConfig, DomIcon, BRAND } from "../../theme";
+
+interface RoomEditorProps {
+  room: Room;
+  floor: FloorConfig;
+  onUpdate: (id: string, updates: Partial<Room>) => void;
+  onDelete: (id: string) => void;
+  haAreas: HaArea[];
+  hass: HomeAssistant;
+  isDark: boolean;
+  getEntitiesForArea: (areaId: string | null) => HaEntityRegistryEntry[];
+  onAddEntity: (entityId: string, x: number, y: number) => EntityPlacement | undefined;
+}
+
+const V_OPTIONS: LabelVertical[] = ["top", "middle", "bottom"];
+const H_OPTIONS: LabelHorizontal[] = ["left", "center", "right"];
+
+const SUPPORTED_DOMAINS = [
+  "light", "switch", "cover", "sensor", "binary_sensor",
+  "climate", "fan", "camera", "media_player", "lock",
+];
+
+function LabelPositionPicker({
+  v,
+  h,
+  onChange,
+  isDark,
+}: {
+  v: LabelVertical;
+  h: LabelHorizontal;
+  onChange: (v: LabelVertical, h: LabelHorizontal) => void;
+  isDark: boolean;
+}) {
+  return (
+    <div
+      style={{
+        display: "inline-grid",
+        gridTemplateColumns: "repeat(3, 28px)",
+        gridTemplateRows: "repeat(3, 28px)",
+        gap: 3,
+        borderRadius: 8,
+        padding: 3,
+        backgroundColor: isDark ? "#2a2a2a" : "#f0f0f0",
+      }}
+    >
+      {V_OPTIONS.map((vOpt) =>
+        H_OPTIONS.map((hOpt) => {
+          const isActive = v === vOpt && h === hOpt;
+          return (
+            <button
+              key={`${vOpt}-${hOpt}`}
+              onClick={() => onChange(vOpt, hOpt)}
+              title={`${vOpt} ${hOpt}`}
+              style={{
+                width: 28,
+                height: 28,
+                borderRadius: 5,
+                border: "none",
+                cursor: "pointer",
+                backgroundColor: isActive
+                  ? "var(--fp-accent)"
+                  : isDark
+                    ? "#3a3a3a"
+                    : "#e0e0e0",
+                transition: "background 0.15s",
+                outline: "none",
+              }}
+            >
+              <span
+                style={{
+                  display: "block",
+                  width: 6,
+                  height: 6,
+                  borderRadius: "50%",
+                  margin: "auto",
+                  backgroundColor: isActive
+                    ? "#fff"
+                    : isDark
+                      ? "#777"
+                      : "#999",
+                }}
+              />
+            </button>
+          );
+        })
+      )}
+    </div>
+  );
+}
+
+/** Get bounding box of room polygon */
+function getRoomBounds(points: Point[]): { minX: number; minY: number; maxX: number; maxY: number } {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const p of points) {
+    if (p.x < minX) minX = p.x;
+    if (p.y < minY) minY = p.y;
+    if (p.x > maxX) maxX = p.x;
+    if (p.y > maxY) maxY = p.y;
+  }
+  return { minX, minY, maxX, maxY };
+}
+
+/** Find a position inside the room bounds that doesn't overlap existing entities */
+function findOpenPosition(
+  room: Room,
+  existingEntities: EntityPlacement[],
+  gridSize: number,
+): { x: number; y: number } {
+  const bounds = getRoomBounds(room.points);
+  const padding = 30;
+  const minX = bounds.minX + padding;
+  const minY = bounds.minY + padding;
+  const maxX = bounds.maxX - padding;
+  const maxY = bounds.maxY - padding;
+
+  // Entities already placed in this room's bounds
+  const occupied = existingEntities.filter(
+    (e) => e.x >= bounds.minX && e.x <= bounds.maxX && e.y >= bounds.minY && e.y <= bounds.maxY
+  );
+
+  // Try grid positions within bounds
+  const step = Math.max(gridSize, 30);
+  for (let y = minY; y <= maxY; y += step) {
+    for (let x = minX; x <= maxX; x += step) {
+      const snappedX = Math.round(x / gridSize) * gridSize;
+      const snappedY = Math.round(y / gridSize) * gridSize;
+      const tooClose = occupied.some(
+        (e) => Math.abs(e.x - snappedX) < step * 0.8 && Math.abs(e.y - snappedY) < step * 0.8
+      );
+      if (!tooClose) return { x: snappedX, y: snappedY };
+    }
+  }
+
+  // Fallback: center of room
+  const cx = (bounds.minX + bounds.maxX) / 2;
+  const cy = (bounds.minY + bounds.maxY) / 2;
+  return { x: Math.round(cx / gridSize) * gridSize, y: Math.round(cy / gridSize) * gridSize };
+}
+
+function getFriendlyName(entityId: string, hass: HomeAssistant): string {
+  const entity = hass.states[entityId];
+  return (entity?.attributes?.friendly_name as string) ?? entityId.split(".")[1];
+}
+
+export function RoomEditor({
+  room,
+  floor,
+  onUpdate,
+  onDelete,
+  haAreas,
+  hass,
+  isDark,
+  getEntitiesForArea,
+  onAddEntity,
+}: RoomEditorProps) {
+  const { resolveEntityIcon } = useThemeConfig();
+
+  const inputStyle = {
+    backgroundColor: isDark ? "#333" : "#fff",
+    borderColor: isDark ? "#555" : "#d1d5db",
+    color: "var(--fp-text)",
+  };
+
+  // Get area entities and split into placed/unplaced
+  const { placedIds, unplacedEntities } = useMemo(() => {
+    const areaEntities = getEntitiesForArea(room.ha_area_id);
+    // Filter to supported domains only
+    const supported = areaEntities.filter((e) =>
+      SUPPORTED_DOMAINS.includes(e.entity_id.split(".")[0])
+    );
+    // Which entity_ids are already on this floor?
+    const floorEntityIds = new Set(floor.entities.map((e) => e.entity_id));
+    const placed = new Set<string>();
+    const unplaced: HaEntityRegistryEntry[] = [];
+    for (const e of supported) {
+      if (floorEntityIds.has(e.entity_id)) {
+        placed.add(e.entity_id);
+      } else {
+        unplaced.push(e);
+      }
+    }
+    return { placedIds: placed, unplacedEntities: unplaced };
+  }, [room.ha_area_id, getEntitiesForArea, floor.entities]);
+
+  const handleAddEntity = (entityId: string) => {
+    const pos = findOpenPosition(room, floor.entities, 20);
+    onAddEntity(entityId, pos.x, pos.y);
+  };
+
+  const handleAddAll = () => {
+    let currentEntities = [...floor.entities];
+    for (const entry of unplacedEntities) {
+      const pos = findOpenPosition(room, currentEntities, 20);
+      const result = onAddEntity(entry.entity_id, pos.x, pos.y);
+      if (result) {
+        currentEntities.push(result);
+      }
+    }
+  };
+
+  return (
+    <div className="p-4 space-y-4">
+      <h3 className="text-sm font-semibold uppercase tracking-wide">
+        Edit Room
+      </h3>
+
+      {/* Name */}
+      <div>
+        <label className="block text-xs mb-1" style={{ color: "var(--fp-text-secondary)" }}>
+          Name
+        </label>
+        <input
+          type="text"
+          value={room.name}
+          onChange={(e) => onUpdate(room.id, { name: e.target.value })}
+          className="w-full px-3 py-2 rounded border text-sm focus:outline-none focus:border-blue-500"
+          style={inputStyle}
+        />
+      </div>
+
+      {/* HA Area link */}
+      <div>
+        <label className="block text-xs mb-1" style={{ color: "var(--fp-text-secondary)" }}>
+          Home Assistant Area
+        </label>
+        <select
+          value={room.ha_area_id ?? ""}
+          onChange={(e) =>
+            onUpdate(room.id, {
+              ha_area_id: e.target.value || null,
+              name: e.target.value
+                ? haAreas.find((a) => a.area_id === e.target.value)?.name ?? room.name
+                : room.name,
+            })
+          }
+          className="w-full px-3 py-2 rounded border text-sm focus:outline-none focus:border-blue-500"
+          style={inputStyle}
+        >
+          <option value="">-- Not linked --</option>
+          {haAreas.map((area) => (
+            <option key={area.area_id} value={area.area_id}>
+              {area.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Area entities */}
+      {room.ha_area_id && (unplacedEntities.length > 0 || placedIds.size > 0) && (
+        <>
+          <hr style={{ borderColor: "var(--fp-border)" }} />
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="text-xs font-semibold uppercase" style={{ color: "var(--fp-text-secondary)" }}>
+                Area Entities
+              </h4>
+              {unplacedEntities.length > 1 && (
+                <button
+                  onClick={handleAddAll}
+                  className="text-xs px-2 py-0.5 rounded"
+                  style={{
+                    backgroundColor: "var(--fp-accent)",
+                    color: "#fff",
+                  }}
+                >
+                  Add All ({unplacedEntities.length})
+                </button>
+              )}
+            </div>
+
+            <div className="space-y-0.5" style={{ maxHeight: 280, overflowY: "auto" }}>
+              {/* Unplaced entities first */}
+              {unplacedEntities.map((entry) => {
+                const domain = entry.entity_id.split(".")[0];
+                const state = hass.states[entry.entity_id]?.state ?? "unknown";
+                const { icon } = resolveEntityIcon(domain, state);
+                return (
+                  <div
+                    key={entry.entity_id}
+                    className="flex items-center gap-2 px-2 py-1.5 rounded text-sm"
+                    style={{ color: "var(--fp-text)" }}
+                  >
+                    <DomIcon icon={icon} size={16} />
+                    <span className="truncate flex-1">
+                      {getFriendlyName(entry.entity_id, hass)}
+                    </span>
+                    <button
+                      onClick={() => handleAddEntity(entry.entity_id)}
+                      className="flex-shrink-0 text-xs px-2 py-0.5 rounded"
+                      style={{
+                        backgroundColor: isDark ? "#333" : "#e8e8e8",
+                        color: "var(--fp-text)",
+                      }}
+                      onMouseEnter={(e) =>
+                        (e.currentTarget.style.backgroundColor = "var(--fp-accent)")
+                      }
+                      onMouseLeave={(e) =>
+                        (e.currentTarget.style.backgroundColor = isDark ? "#333" : "#e8e8e8")
+                      }
+                    >
+                      Add
+                    </button>
+                  </div>
+                );
+              })}
+              {/* Already placed entities */}
+              {Array.from(placedIds).map((entityId) => {
+                const domain = entityId.split(".")[0];
+                const state = hass.states[entityId]?.state ?? "unknown";
+                const { icon } = resolveEntityIcon(domain, state);
+                return (
+                  <div
+                    key={entityId}
+                    className="flex items-center gap-2 px-2 py-1.5 rounded text-sm"
+                    style={{ color: "var(--fp-text-secondary)", opacity: 0.6 }}
+                  >
+                    <DomIcon icon={icon} size={16} />
+                    <span className="truncate flex-1">
+                      {getFriendlyName(entityId, hass)}
+                    </span>
+                    <span className="flex-shrink-0 text-xs" style={{ color: BRAND }}>
+                      Placed
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {unplacedEntities.length === 0 && placedIds.size > 0 && (
+              <p className="text-xs mt-1" style={{ color: "var(--fp-text-secondary)" }}>
+                All area entities are placed.
+              </p>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* Show label */}
+      <label className="flex items-center gap-2 text-sm cursor-pointer">
+        <input
+          type="checkbox"
+          checked={room.label_visible !== false}
+          onChange={(e) => onUpdate(room.id, { label_visible: e.target.checked })}
+        />
+        Show label
+      </label>
+
+      {/* Label position grid */}
+      {room.label_visible !== false && (
+        <div>
+          <label className="block text-xs mb-1.5" style={{ color: "var(--fp-text-secondary)" }}>
+            Label position
+          </label>
+          <LabelPositionPicker
+            v={room.label_v ?? "middle"}
+            h={room.label_h ?? "center"}
+            onChange={(v, h) => onUpdate(room.id, { label_v: v, label_h: h })}
+            isDark={isDark}
+          />
+        </div>
+      )}
+
+      {/* Info */}
+      <div className="text-xs" style={{ color: "var(--fp-text-secondary)" }}>
+        {room.points.length} vertices
+      </div>
+
+      {/* Delete */}
+      <button
+        onClick={() => onDelete(room.id)}
+        className="w-full px-3 py-2 rounded text-sm bg-red-600/10 text-red-500 hover:bg-red-600/20"
+      >
+        Delete Room
+      </button>
+    </div>
+  );
+}

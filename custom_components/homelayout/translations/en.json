@@ -1,0 +1,10 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "HomeLayout",
+        "description": "Install HomeLayout to get an interactive floor plan panel in your sidebar."
+      }
+    }
+  }
+}
