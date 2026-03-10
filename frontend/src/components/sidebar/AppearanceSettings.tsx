@@ -1,8 +1,9 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
-import type { GlobalSettings, FurnitureType, SerializedIconRef } from "../../types";
+import type { GlobalSettings, FloorBackground, FloorBackgroundType, FurnitureType, SerializedIconRef } from "../../types";
 import type { ThemeColors, IconData } from "../../theme/types";
 import { themePresets, iconPacks, DomIcon, BRAND } from "../../theme";
 import { resolveIcon } from "../../theme/resolveIcon";
+import { BACKGROUND_PRESETS } from "../../backgroundPresets";
 
 // Default preset/pack used when user hasn't overridden
 const DEFAULT_THEME_ID = "default";
@@ -16,6 +17,8 @@ interface AppearanceSettingsProps {
   isDark: boolean;
   themePreference: GlobalSettings["theme"];
   onSetTheme: (theme: GlobalSettings["theme"]) => void;
+  floorBackground?: FloorBackground;
+  onUpdateFloorBackground?: (bg: FloorBackground) => void;
 }
 
 interface IconCandidate {
@@ -530,9 +533,12 @@ export function AppearanceSettings({
   isDark,
   themePreference,
   onSetTheme,
+  floorBackground,
+  onUpdateFloorBackground,
 }: AppearanceSettingsProps) {
   const [pickerTarget, setPickerTarget] = useState<PickerTarget | null>(null);
   const [expandedColorKey, setExpandedColorKey] = useState<string | null>(null);
+  const [bgCustomColor, setBgCustomColor] = useState(floorBackground?.color ?? "#1a1a2e");
 
   const currentTheme = themePresets[settings.theme_config_id ?? DEFAULT_THEME_ID] ?? themePresets[DEFAULT_THEME_ID];
   const currentPack = iconPacks[settings.icon_pack_id ?? DEFAULT_PACK_ID] ?? iconPacks[DEFAULT_PACK_ID];
@@ -682,7 +688,7 @@ export function AppearanceSettings({
             <button
               key={mode}
               onClick={() => onSetTheme(mode)}
-              className="flex-1 py-1.5 rounded text-xs font-medium capitalize"
+              className="flex-1 py-2.5 rounded-lg text-xs font-medium capitalize"
               style={{
                 backgroundColor:
                   themePreference === mode
@@ -696,6 +702,164 @@ export function AppearanceSettings({
           ))}
         </div>
       </div>
+
+      {/* ─── Floor Background ─── */}
+      {onUpdateFloorBackground && (() => {
+        const bg = floorBackground ?? { type: "none" as FloorBackgroundType };
+        const bgTypes: { value: FloorBackgroundType; label: string }[] = [
+          { value: "none", label: "None" },
+          { value: "color", label: "Color" },
+          { value: "image", label: "Image" },
+          { value: "preset", label: "Animated" },
+        ];
+        return (
+          <div>
+            <label className="block text-xs mb-1.5" style={{ color: "var(--fp-text-secondary)" }}>
+              Floor Background
+            </label>
+
+            {/* Type selector */}
+            <div className="flex gap-1 mb-2">
+              {bgTypes.map((t) => (
+                <button
+                  key={t.value}
+                  onClick={() => onUpdateFloorBackground({ ...bg, type: t.value })}
+                  className="flex-1 py-2.5 rounded-lg text-xs font-medium"
+                  style={{
+                    backgroundColor: bg.type === t.value ? BRAND : isDark ? "#333" : "#e8e8e8",
+                    color: bg.type === t.value ? "#fff" : "var(--fp-text)",
+                    border: "none",
+                    cursor: "pointer",
+                  }}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Color picker */}
+            {bg.type === "color" && (
+              <div className="space-y-2">
+                <div className="flex gap-2 items-center">
+                  <input
+                    type="color"
+                    value={bgCustomColor}
+                    onChange={(e) => {
+                      setBgCustomColor(e.target.value);
+                      onUpdateFloorBackground({ ...bg, color: e.target.value });
+                    }}
+                    style={{ width: 36, height: 36, border: "none", borderRadius: 8, cursor: "pointer", backgroundColor: "transparent" }}
+                  />
+                  <span className="text-xs" style={{ color: "var(--fp-text-secondary)" }}>{bgCustomColor}</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {["#1a1a2e", "#0f3460", "#16213e", "#2c3e50", "#1b2838", "#0d1b2a", "#1e1e2f", "#2d2d44",
+                    "#fafafa", "#f0f0f0", "#e8e8e8", "#d4d4d4", "#f5f0eb", "#ede7d9", "#fef3c7", "#ecfdf5"].map((c) => (
+                    <button
+                      key={c}
+                      onClick={() => {
+                        setBgCustomColor(c);
+                        onUpdateFloorBackground({ ...bg, color: c });
+                      }}
+                      style={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: 6,
+                        backgroundColor: c,
+                        border: bg.color === c ? `2px solid ${BRAND}` : `1px solid ${isDark ? "#555" : "#ccc"}`,
+                        cursor: "pointer",
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Image URL */}
+            {bg.type === "image" && (
+              <div className="space-y-2">
+                <input
+                  type="text"
+                  value={bg.image ?? ""}
+                  onChange={(e) => onUpdateFloorBackground({ ...bg, image: e.target.value })}
+                  placeholder="/local/floorplan.png"
+                  className="w-full px-3 py-2.5 rounded-lg border text-sm focus:outline-none focus:border-blue-500"
+                  style={{
+                    backgroundColor: isDark ? "#333" : "#fff",
+                    borderColor: isDark ? "#555" : "#d1d5db",
+                    color: "var(--fp-text)",
+                  }}
+                />
+                <p className="text-xs" style={{ color: "var(--fp-text-secondary)" }}>
+                  Use a HA path like /local/floorplan.png or a full URL.
+                </p>
+                <label
+                  className="flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-medium cursor-pointer"
+                  style={{ backgroundColor: BRAND, color: "#fff" }}
+                >
+                  Upload Image
+                  <input
+                    type="file"
+                    accept="image/*"
+                    style={{ display: "none" }}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const reader = new FileReader();
+                      reader.onload = () => {
+                        onUpdateFloorBackground({ ...bg, image: reader.result as string });
+                      };
+                      reader.readAsDataURL(file);
+                    }}
+                  />
+                </label>
+              </div>
+            )}
+
+            {/* Preset selector */}
+            {bg.type === "preset" && (
+              <div className="grid gap-1.5" style={{ gridTemplateColumns: "1fr 1fr" }}>
+                {BACKGROUND_PRESETS.map((preset) => (
+                  <button
+                    key={preset.id}
+                    onClick={() => onUpdateFloorBackground({ ...bg, preset: preset.id })}
+                    className="rounded-lg text-xs font-medium py-3"
+                    style={{
+                      background: typeof preset.style.background === "string" ? preset.style.background : undefined,
+                      backgroundSize: "cover",
+                      border: bg.preset === preset.id ? `2px solid ${BRAND}` : `1px solid ${isDark ? "#444" : "#ddd"}`,
+                      color: "#fff",
+                      cursor: "pointer",
+                      textShadow: "0 1px 3px rgba(0,0,0,0.5)",
+                    }}
+                  >
+                    {preset.name}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Opacity slider (for color, image, preset) */}
+            {bg.type !== "none" && (
+              <div className="mt-2">
+                <div className="flex justify-between items-center mb-1">
+                  <label className="text-xs" style={{ color: "var(--fp-text-secondary)" }}>Opacity</label>
+                  <span className="text-xs font-medium">{Math.round((bg.opacity ?? 1) * 100)}%</span>
+                </div>
+                <input
+                  type="range"
+                  min={0}
+                  max={1}
+                  step={0.05}
+                  value={bg.opacity ?? 1}
+                  onChange={(e) => onUpdateFloorBackground({ ...bg, opacity: Number(e.target.value) })}
+                  className="w-full accent-blue-500"
+                />
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* ─── Icon Sizes ─── */}
       <div>

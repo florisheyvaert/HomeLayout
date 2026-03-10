@@ -47,8 +47,8 @@ function LabelPositionPicker({
     <div
       style={{
         display: "inline-grid",
-        gridTemplateColumns: "repeat(3, 28px)",
-        gridTemplateRows: "repeat(3, 28px)",
+        gridTemplateColumns: "repeat(3, 36px)",
+        gridTemplateRows: "repeat(3, 36px)",
         gap: 3,
         borderRadius: 8,
         padding: 3,
@@ -64,8 +64,8 @@ function LabelPositionPicker({
               onClick={() => onChange(vOpt, hOpt)}
               title={`${vOpt} ${hOpt}`}
               style={{
-                width: 28,
-                height: 28,
+                width: 36,
+                height: 36,
                 borderRadius: 5,
                 border: "none",
                 cursor: "pointer",
@@ -225,7 +225,7 @@ export function RoomEditor({
           type="text"
           value={room.name}
           onChange={(e) => onUpdate(room.id, { name: e.target.value })}
-          className="w-full px-3 py-2 rounded border text-sm focus:outline-none focus:border-blue-500"
+          className="w-full px-3 py-2.5 rounded-lg border text-sm focus:outline-none focus:border-blue-500"
           style={inputStyle}
         />
       </div>
@@ -245,7 +245,7 @@ export function RoomEditor({
                 : room.name,
             })
           }
-          className="w-full px-3 py-2 rounded border text-sm focus:outline-none focus:border-blue-500"
+          className="w-full px-3 py-2.5 rounded-lg border text-sm focus:outline-none focus:border-blue-500"
           style={inputStyle}
         >
           <option value="">-- Not linked --</option>
@@ -269,7 +269,7 @@ export function RoomEditor({
               {unplacedEntities.length > 1 && (
                 <button
                   onClick={handleAddAll}
-                  className="text-xs px-2 py-0.5 rounded"
+                  className="text-xs px-3 py-1.5 rounded-lg"
                   style={{
                     backgroundColor: "var(--fp-accent)",
                     color: "#fff",
@@ -289,7 +289,7 @@ export function RoomEditor({
                 return (
                   <div
                     key={entry.entity_id}
-                    className="flex items-center gap-2 px-2 py-1.5 rounded text-sm"
+                    className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm"
                     style={{ color: "var(--fp-text)" }}
                   >
                     <DomIcon icon={icon} size={16} />
@@ -298,7 +298,7 @@ export function RoomEditor({
                     </span>
                     <button
                       onClick={() => handleAddEntity(entry.entity_id)}
-                      className="flex-shrink-0 text-xs px-2 py-0.5 rounded"
+                      className="flex-shrink-0 text-xs px-3 py-1.5 rounded-lg"
                       style={{
                         backgroundColor: isDark ? "#333" : "#e8e8e8",
                         color: "var(--fp-text)",
@@ -323,7 +323,7 @@ export function RoomEditor({
                 return (
                   <div
                     key={entityId}
-                    className="flex items-center gap-2 px-2 py-1.5 rounded text-sm"
+                    className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm"
                     style={{ color: "var(--fp-text-secondary)", opacity: 0.6 }}
                   >
                     <DomIcon icon={icon} size={16} />
@@ -348,11 +348,12 @@ export function RoomEditor({
       )}
 
       {/* Show label */}
-      <label className="flex items-center gap-2 text-sm cursor-pointer">
+      <label className="flex items-center gap-3 text-sm cursor-pointer py-1">
         <input
           type="checkbox"
           checked={room.label_visible !== false}
           onChange={(e) => onUpdate(room.id, { label_visible: e.target.checked })}
+          style={{ width: 18, height: 18 }}
         />
         Show label
       </label>
@@ -380,7 +381,7 @@ export function RoomEditor({
       {/* Delete */}
       <button
         onClick={() => onDelete(room.id)}
-        className="w-full px-3 py-2 rounded text-sm bg-red-600/10 text-red-500 hover:bg-red-600/20"
+        className="w-full px-3 py-3 rounded-lg text-sm font-medium bg-red-600/10 text-red-500 hover:bg-red-600/20"
       >
         Delete Room
       </button>

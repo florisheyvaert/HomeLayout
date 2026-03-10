@@ -82,7 +82,7 @@ export function FurnitureControl({
               min={1}
               value={gridW}
               onChange={(e) => handleWidthChange(parseInt(e.target.value) || 1)}
-              className="w-full px-2 py-1.5 rounded border text-sm"
+              className="w-full px-3 py-2.5 rounded-lg border text-sm"
               style={inputStyle}
             />
           </div>
@@ -94,7 +94,7 @@ export function FurnitureControl({
               min={1}
               value={gridH}
               onChange={(e) => handleHeightChange(parseInt(e.target.value) || 1)}
-              className="w-full px-2 py-1.5 rounded border text-sm"
+              className="w-full px-3 py-2.5 rounded-lg border text-sm"
               style={inputStyle}
             />
           </div>

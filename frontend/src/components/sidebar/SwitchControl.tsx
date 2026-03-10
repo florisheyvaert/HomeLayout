@@ -92,17 +92,23 @@ export function SwitchControl({ entityId, entity, hass, isDark, domain }: Switch
           <label className="block text-xs mb-1.5" style={{ color: "var(--fp-text-secondary)" }}>
             Preset
           </label>
-          <div className="flex flex-wrap gap-1">
+          <div
+            className="grid gap-1.5"
+            style={{ gridTemplateColumns: `repeat(${Math.min(fanPresets.length, 3)}, 1fr)` }}
+          >
             {fanPresets.map((preset) => (
               <button
                 key={preset}
                 onClick={() =>
                   hass.callService("fan", "set_preset_mode", { preset_mode: preset }, { entity_id: entityId })
                 }
-                className="px-2.5 py-1.5 rounded text-xs font-medium capitalize"
+                className="rounded-lg text-xs font-medium capitalize"
                 style={{
                   backgroundColor: currentPreset === preset ? hexToRgba(accent, 0.15) : isDark ? "#333" : "#e8e8e8",
                   color: currentPreset === preset ? accent : "var(--fp-text)",
+                  height: 40,
+                  border: "none",
+                  cursor: "pointer",
                 }}
               >
                 {preset.replace("_", " ")}

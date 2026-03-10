@@ -24,6 +24,20 @@ export interface HomeLayoutStore {
   settings: GlobalSettings;
 }
 
+export type FloorBackgroundType = "none" | "color" | "image" | "preset";
+
+export interface FloorBackground {
+  type: FloorBackgroundType;
+  /** Hex color when type === "color" */
+  color?: string;
+  /** Image URL when type === "image" (relative HA path or data URL) */
+  image?: string;
+  /** Preset ID when type === "preset" */
+  preset?: string;
+  /** Image opacity 0–1, default 1 */
+  opacity?: number;
+}
+
 export interface FloorConfig {
   id: string;
   ha_floor_id: string | null;
@@ -32,6 +46,7 @@ export interface FloorConfig {
   rooms: Room[];
   entities: EntityPlacement[];
   furniture: FurniturePlacement[];
+  background?: FloorBackground;
 }
 
 export type LabelVertical = "top" | "middle" | "bottom";
@@ -61,6 +76,8 @@ export interface EntityPlacement {
   label_visible: boolean;
   show_icon: boolean;
   show_state: boolean;
+  /** When set, shows this attribute value instead of the state */
+  show_attribute?: string;
 }
 
 export interface FavoriteItem {
@@ -136,4 +153,4 @@ export interface SerializedIconRef {
 }
 
 export type AppMode = "view" | "edit";
-export type CanvasTool = "select" | "multiselect" | "draw" | "place" | "furniture";
+export type CanvasTool = "select" | "multiselect" | "draw" | "draw-rect" | "draw-circle" | "draw-triangle" | "place" | "furniture";

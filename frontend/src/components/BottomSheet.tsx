@@ -8,9 +8,9 @@ interface BottomSheetProps {
   isDark: boolean;
 }
 
-const PEEK_HEIGHT = 180;
-const HALF_RATIO = 0.45;
-const FULL_RATIO = 0.85;
+const PEEK_HEIGHT = 240;
+const HALF_RATIO = 0.50;
+const FULL_RATIO = 0.90;
 
 function getSnapHeight(snap: SnapPoint, vh: number): number {
   switch (snap) {
@@ -131,7 +131,7 @@ export function BottomSheet({ children, targetSnap, isDark }: BottomSheetProps) 
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
-            padding: "10px 0 4px",
+            padding: "14px 0 10px",
             cursor: isDragging ? "grabbing" : "grab",
             touchAction: "none",
             flexShrink: 0,
@@ -140,10 +140,10 @@ export function BottomSheet({ children, targetSnap, isDark }: BottomSheetProps) 
         >
           <div
             style={{
-              width: 36,
-              height: 4,
-              borderRadius: 2,
-              backgroundColor: isDark ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.18)",
+              width: 48,
+              height: 5,
+              borderRadius: 3,
+              backgroundColor: isDark ? "rgba(255,255,255,0.22)" : "rgba(0,0,0,0.22)",
             }}
           />
         </div>

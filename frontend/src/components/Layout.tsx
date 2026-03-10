@@ -8,8 +8,11 @@ import { useHomeLayout } from "../hooks/useHomeLayout";
 import { useCanvasTools } from "../hooks/useCanvasTools";
 import { useTheme } from "../hooks/useTheme";
 import { ThemeProvider, BRAND } from "../theme";
-import type { HomeAssistant, AppMode, GlobalSettings, CanvasTool, EntityPlacement, FurniturePlacement, FurnitureType } from "../types";
+import type { HomeAssistant, AppMode, GlobalSettings, FloorBackground, CanvasTool, EntityPlacement, FurniturePlacement, FurnitureType } from "../types";
 import type { HomeLayoutCanvasHandle } from "./canvas/HomeLayoutCanvas";
+
+import logoSvg from "../../public/logo.svg?raw";
+const logoUrl = `data:image/svg+xml,${encodeURIComponent(logoSvg)}`;
 
 const DESKTOP_BREAKPOINT = 768;
 
@@ -79,6 +82,7 @@ export function Layout({ hass }: LayoutProps) {
     updateFurniture,
     removeFurniture,
     moveFurnitureItems,
+    updateFloor,
     addFavorite,
     removeFavorite,
     updateSettings,
@@ -106,7 +110,10 @@ export function Layout({ hass }: LayoutProps) {
   const gridEnabled = gridMode !== "none";
   const [showAppearance, setShowAppearance] = useState(false);
   const [showQuickAccess, setShowQuickAccess] = useState(false);
+  const [showShapeMenu, setShowShapeMenu] = useState(false);
   const [isDefaultView, setIsDefaultView] = useState(true);
+  const [draggingEntityId, setDraggingEntityId] = useState<string | null>(null);
+  const [dragClientPos, setDragClientPos] = useState<{ x: number; y: number } | null>(null);
   const canvasRef = useRef<HomeLayoutCanvasHandle>(null);
 
   /* ─── Selection handlers (unchanged logic) ─── */
@@ -156,6 +163,16 @@ export function Layout({ hass }: LayoutProps) {
     setSelectedEntityIds([]);
     setSelectedFurnitureIds([]);
   }, []);
+
+  const handlePanelClose = useCallback(() => {
+    setSelectedRoomIds([]);
+    setSelectedEntityIds([]);
+    setSelectedFurnitureIds([]);
+    setShowAppearance(false);
+    if (activeTool === "place" || activeTool === "furniture") {
+      selectTool("select");
+    }
+  }, [activeTool, selectTool]);
 
   const handleMarqueeSelect = useCallback(
     (roomIds: string[], entityIds: string[], additive: boolean, furnitureIds?: string[]) => {
@@ -246,6 +263,55 @@ export function Layout({ hass }: LayoutProps) {
     [addEntity]
   );
 
+  const handleTapPlaceEntity = useCallback(
+    (entityId: string) => {
+      const center = canvasRef.current?.getViewportCenter();
+      if (!center) return;
+      // Snap to grid
+      const gs = store.settings.grid_size;
+      const x = Math.round(center.x / gs) * gs;
+      const y = Math.round(center.y / gs) * gs;
+      handleDropEntity(entityId, x, y);
+    },
+    [handleDropEntity, store.settings.grid_size]
+  );
+
+  const handleUpdateFloorBackground = useCallback(
+    (bg: FloorBackground) => {
+      if (!currentFloorId) return;
+      updateFloor(currentFloorId, { background: bg });
+    },
+    [currentFloorId, updateFloor]
+  );
+
+  /* ─── Pointer-based entity drag (no browser badge) ─── */
+  const handleEntityDragStart = useCallback((entityId: string) => {
+    setDraggingEntityId(entityId);
+  }, []);
+
+  useEffect(() => {
+    if (!draggingEntityId) return;
+
+    const onMove = (e: PointerEvent) => {
+      setDragClientPos({ x: e.clientX, y: e.clientY });
+    };
+    const onUp = (e: PointerEvent) => {
+      const pt = canvasRef.current?.clientToCanvas(e.clientX, e.clientY);
+      if (pt) {
+        handleDropEntity(draggingEntityId, pt.x, pt.y);
+      }
+      setDraggingEntityId(null);
+      setDragClientPos(null);
+    };
+
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+  }, [draggingEntityId, handleDropEntity]);
+
   const handleMoveSelectedRooms = useCallback(
     (draggedId: string, dx: number, dy: number) => {
       if (selectedRoomIds.length > 1 && selectedRoomIds.includes(draggedId)) {
@@ -311,6 +377,7 @@ export function Layout({ hass }: LayoutProps) {
         setSelectedFurnitureIds([]);
         setShowAppearance(false);
         setShowQuickAccess(false);
+        setShowShapeMenu(false);
       }
       if ((e.ctrlKey || e.metaKey) && e.key === "a" && mode === "edit") {
         e.preventDefault();
@@ -369,6 +436,7 @@ export function Layout({ hass }: LayoutProps) {
         setSelectedEntityIds([]);
         setSelectedFurnitureIds([]);
         setShowAppearance(false);
+        setShowShapeMenu(false);
       }
       setShowQuickAccess(false);
       return next;
@@ -496,9 +564,9 @@ export function Layout({ hass }: LayoutProps) {
         : mode === "edit" && (activeTool === "place" || activeTool === "furniture")
           ? "half"
           : mode === "edit" && multiCount > 1
-            ? "peek"
+            ? "half"
             : mode === "edit" && (hasRoom || hasEntity || hasFurniture)
-              ? "peek"
+              ? "half"
               : "hidden";
 
   // Has content to show in ControlPanel?
@@ -513,13 +581,19 @@ export function Layout({ hass }: LayoutProps) {
   const helperText =
     mode === "edit" && activeTool === "draw"
       ? "Click to place vertices, double-click to finish"
-      : mode === "edit" && activeTool === "place"
-        ? "Drag an entity from the list onto the canvas"
-        : mode === "edit" && activeTool === "furniture"
-          ? "Drag furniture from the list onto the canvas"
-          : mode === "edit" && activeTool === "multiselect"
-            ? "Drag to select, click items to add/remove"
-            : null;
+      : mode === "edit" && activeTool === "draw-rect"
+        ? "Click and drag to draw a rectangle"
+        : mode === "edit" && activeTool === "draw-circle"
+          ? "Click and drag to draw a circle"
+          : mode === "edit" && activeTool === "draw-triangle"
+            ? "Click and drag to draw a triangle"
+            : mode === "edit" && activeTool === "place"
+              ? "Drag an entity from the list onto the canvas"
+              : mode === "edit" && activeTool === "furniture"
+                ? "Drag furniture from the list onto the canvas"
+                : mode === "edit" && activeTool === "multiselect"
+                  ? "Drag to select, click items to add/remove"
+                  : null;
 
   /* ─── Tool button helper ─── */
   const toolBtn = (
@@ -625,6 +699,8 @@ export function Layout({ hass }: LayoutProps) {
           isDark={isDark}
           defaultIconSize={store.settings.default_icon_size}
           domainIconSizes={store.settings.domain_icon_sizes}
+          draggingEntityId={draggingEntityId}
+          dragClientPos={dragClientPos}
         />
       </div>
 
@@ -768,13 +844,92 @@ export function Layout({ hass }: LayoutProps) {
             <div
               style={{
                 borderRadius: 12,
-                overflow: "hidden",
                 display: "flex",
                 flexDirection: "column",
+                position: "relative",
                 ...glass(isDark),
               }}
             >
-              {toolBtn("draw", <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5" /></svg>, "Draw Room", activeTool === "draw")}
+              {/* Draw Shape — with submenu */}
+              <div>
+                <button
+                  onClick={() => setShowShapeMenu((s) => !s)}
+                  title="Draw Shape"
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: "12px 12px 0 0",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 17,
+                    cursor: "pointer",
+                    border: "none",
+                    outline: "none",
+                    backgroundColor: (activeTool === "draw" || activeTool === "draw-rect" || activeTool === "draw-circle" || activeTool === "draw-triangle") ? BRAND : "transparent",
+                    color: (activeTool === "draw" || activeTool === "draw-rect" || activeTool === "draw-circle" || activeTool === "draw-triangle") ? "#fff" : isDark ? "#e1e1e1" : "#212121",
+                    transition: "all 0.15s",
+                  }}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5" /></svg>
+                </button>
+                {/* Shape submenu flyout — positioned relative to tool group */}
+                {showShapeMenu && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      left: 50,
+                      top: 0,
+                      zIndex: 20,
+                      display: "flex",
+                      flexDirection: "column",
+                      borderRadius: 12,
+                      overflow: "hidden",
+                      ...glass(isDark),
+                    }}
+                  >
+                    {([
+                      ["draw", "Freeform", <svg key="f" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5" /></svg>],
+                      ["draw-rect", "Rectangle", <svg key="r" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="1" /></svg>],
+                      ["draw-circle", "Circle", <svg key="c" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /></svg>],
+                      ["draw-triangle", "Triangle", <svg key="t" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 3 22 21 2 21" /></svg>],
+                    ] as [CanvasTool, string, React.ReactNode][]).map(([tool, label, icon], i, arr) => (
+                      <div key={tool}>
+                        <button
+                          onClick={() => {
+                            selectTool(activeTool === tool ? "select" : tool);
+                            setShowShapeMenu(false);
+                          }}
+                          title={label}
+                          style={{
+                            width: "auto",
+                            minWidth: 120,
+                            height: 40,
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                            padding: "0 12px",
+                            fontSize: 12,
+                            cursor: "pointer",
+                            border: "none",
+                            outline: "none",
+                            backgroundColor: activeTool === tool ? BRAND : "transparent",
+                            color: activeTool === tool ? "#fff" : isDark ? "#e1e1e1" : "#212121",
+                            transition: "all 0.15s",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {icon}
+                          {label}
+                        </button>
+                        {i < arr.length - 1 && (
+                          <div style={{ height: 1, backgroundColor: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)" }} />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
               <div
                 style={{
                   height: 1,
@@ -811,6 +966,7 @@ export function Layout({ hass }: LayoutProps) {
                 style={{
                   width: 44,
                   height: 44,
+                  borderRadius: "0 0 12px 12px",
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
@@ -1020,7 +1176,7 @@ export function Layout({ hass }: LayoutProps) {
           }}
         >
           <img
-            src="/homelayout_panel/logo.svg"
+            src={logoUrl}
             alt="HomeLayout"
             style={{ height: 32, width: "auto" }}
           />
@@ -1068,6 +1224,12 @@ export function Layout({ hass }: LayoutProps) {
                 selectedFurnitureIds={selectedFurnitureIds}
                 onUpdateFurniture={updateFurniture}
                 onRemoveFurniture={handleRemoveFurniture}
+                isMobile={true}
+                onTapPlace={handleTapPlaceEntity}
+                onDragStartEntity={handleEntityDragStart}
+                floorBackground={currentFloor?.background}
+                onUpdateFloorBackground={handleUpdateFloorBackground}
+                onClose={handlePanelClose}
               />
             )}
           </BottomSheet>
@@ -1101,6 +1263,11 @@ export function Layout({ hass }: LayoutProps) {
                 selectedFurnitureIds={selectedFurnitureIds}
                 onUpdateFurniture={updateFurniture}
                 onRemoveFurniture={handleRemoveFurniture}
+                isMobile={false}
+                onDragStartEntity={handleEntityDragStart}
+                floorBackground={currentFloor?.background}
+                onUpdateFloorBackground={handleUpdateFloorBackground}
+                onClose={handlePanelClose}
               />
             )}
           </SideDrawer>

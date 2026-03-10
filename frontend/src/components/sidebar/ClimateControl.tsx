@@ -95,7 +95,7 @@ export function ClimateControl({ entityId, entity, hass, isDark }: ClimateContro
           <div className="flex items-center gap-2">
             <button
               onClick={() => handleSetTemp(Math.max(minTemp, tempValue - tempStep))}
-              className="w-8 h-8 rounded-lg text-lg flex items-center justify-center"
+              className="w-10 h-10 rounded-lg text-lg flex items-center justify-center"
               style={{ backgroundColor: isDark ? "#333" : "#e8e8e8" }}
             >
               −
@@ -111,7 +111,7 @@ export function ClimateControl({ entityId, entity, hass, isDark }: ClimateContro
             />
             <button
               onClick={() => handleSetTemp(Math.min(maxTemp, tempValue + tempStep))}
-              className="w-8 h-8 rounded-lg text-lg flex items-center justify-center"
+              className="w-10 h-10 rounded-lg text-lg flex items-center justify-center"
               style={{ backgroundColor: isDark ? "#333" : "#e8e8e8" }}
             >
               +
@@ -126,20 +126,27 @@ export function ClimateControl({ entityId, entity, hass, isDark }: ClimateContro
           <label className="block text-xs mb-1.5" style={{ color: "var(--fp-text-secondary)" }}>
             Mode
           </label>
-          <div className="flex flex-wrap gap-1">
+          <div
+            className="grid gap-1.5"
+            style={{ gridTemplateColumns: `repeat(${Math.min(hvacModes.length, 3)}, 1fr)` }}
+          >
             {hvacModes.map((mode) => {
               const { icon: modeIcon } = resolveEntityIcon("climate", mode);
               return (
                 <button
                   key={mode}
                   onClick={() => handleSetMode(mode)}
-                  className="px-2.5 py-1.5 rounded text-xs font-medium capitalize transition-all flex items-center gap-1"
+                  className="rounded-lg text-xs font-medium capitalize transition-all flex flex-col items-center justify-center gap-1"
                   style={{
                     backgroundColor: state === mode ? hexToRgba(accent, 0.15) : isDark ? "#333" : "#e8e8e8",
                     color: state === mode ? accent : "var(--fp-text)",
+                    height: 48,
+                    border: "none",
+                    cursor: "pointer",
                   }}
                 >
-                  <DomIcon icon={modeIcon} size={14} /> {mode.replace("_", " ")}
+                  <DomIcon icon={modeIcon} size={16} />
+                  <span>{mode.replace("_", " ")}</span>
                 </button>
               );
             })}
@@ -153,15 +160,21 @@ export function ClimateControl({ entityId, entity, hass, isDark }: ClimateContro
           <label className="block text-xs mb-1.5" style={{ color: "var(--fp-text-secondary)" }}>
             Fan
           </label>
-          <div className="flex flex-wrap gap-1">
+          <div
+            className="grid gap-1.5"
+            style={{ gridTemplateColumns: `repeat(${Math.min(fanModes.length, 3)}, 1fr)` }}
+          >
             {fanModes.map((mode) => (
               <button
                 key={mode}
                 onClick={() => handleSetFanMode(mode)}
-                className="px-2.5 py-1.5 rounded text-xs font-medium capitalize transition-all"
+                className="rounded-lg text-xs font-medium capitalize transition-all"
                 style={{
                   backgroundColor: fanMode === mode ? hexToRgba(accent, 0.15) : isDark ? "#333" : "#e8e8e8",
                   color: fanMode === mode ? accent : "var(--fp-text)",
+                  height: 40,
+                  border: "none",
+                  cursor: "pointer",
                 }}
               >
                 {mode.replace("_", " ")}

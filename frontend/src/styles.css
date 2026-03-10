@@ -1,3 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.entity-row:hover .entity-drag-grip {
+  opacity: 1 !important;
+}

@@ -27,8 +27,8 @@ export function FavoritesPanel({ favorites, hass, isDark, onRemoveFavorite, onSh
             onClick={onShowEditor}
             title="Add favorite"
             style={{
-              width: 32,
-              height: 32,
+              width: 36,
+              height: 36,
               borderRadius: 8,
               border: "none",
               backgroundColor: isDark ? "#333" : "#e8e8e8",
@@ -46,8 +46,8 @@ export function FavoritesPanel({ favorites, hass, isDark, onRemoveFavorite, onSh
             onClick={() => setEditMode((e) => !e)}
             title={editMode ? "Done editing" : "Edit favorites"}
             style={{
-              width: 32,
-              height: 32,
+              width: 36,
+              height: 36,
               borderRadius: 8,
               border: "none",
               backgroundColor: editMode ? "var(--fp-accent)" : isDark ? "#333" : "#e8e8e8",

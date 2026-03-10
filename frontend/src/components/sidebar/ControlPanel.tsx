@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import type {
   FloorConfig,
   Room,
@@ -11,6 +11,7 @@ import type {
   GlobalSettings,
   HaEntityRegistryEntry,
   FavoriteItem,
+  FloorBackground,
 } from "../../types";
 import { RoomEditor } from "./RoomEditor";
 import { EntityBrowser } from "./EntityBrowser";
@@ -49,6 +50,12 @@ interface ControlPanelProps {
   selectedFurnitureIds: string[];
   onUpdateFurniture: (id: string, updates: Partial<FurniturePlacement>) => void;
   onRemoveFurniture: (id: string) => void;
+  isMobile?: boolean;
+  onTapPlace?: (entityId: string) => void;
+  onDragStartEntity?: (entityId: string) => void;
+  floorBackground?: FloorBackground;
+  onUpdateFloorBackground?: (bg: FloorBackground) => void;
+  onClose?: () => void;
 }
 
 export function ControlPanel({
@@ -78,6 +85,12 @@ export function ControlPanel({
   selectedFurnitureIds,
   onUpdateFurniture,
   onRemoveFurniture,
+  isMobile,
+  onTapPlace,
+  onDragStartEntity,
+  floorBackground,
+  onUpdateFloorBackground,
+  onClose,
 }: ControlPanelProps) {
   const [showFavoriteEditor, setShowFavoriteEditor] = useState(false);
 
@@ -95,15 +108,62 @@ export function ControlPanel({
     ? (settings.domain_icon_sizes?.[entityDomain] ?? settings.default_icon_size)
     : settings.default_icon_size;
 
-  // Appearance settings panel (takes priority)
-  if (showAppearance) {
-    return (
+  // Close button wrapper
+  const wrap = (children: ReactNode) => (
+    <div style={{ position: "relative" }}>
+      {onClose && (
+        <button
+          onClick={onClose}
+          title="Close"
+          style={{
+            position: "absolute",
+            top: 8,
+            right: 8,
+            zIndex: 10,
+            width: 28,
+            height: 28,
+            borderRadius: 8,
+            border: "none",
+            outline: "none",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
+            color: isDark ? "#aaa" : "#666",
+            fontSize: 14,
+            transition: "background-color 0.15s",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.12)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)";
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+        </button>
+      )}
+      {children}
+    </div>
+  );
+
+  // Edit mode: selection takes priority over appearance settings
+  const hasEditSelection = mode === "edit" && (multiSelectCount > 0 || activeTool === "place" || activeTool === "furniture");
+
+  // Appearance settings panel (only if no edit selection)
+  if (showAppearance && !hasEditSelection) {
+    return wrap(
       <AppearanceSettings
         settings={settings}
         onUpdateSettings={onUpdateSettings}
         isDark={isDark}
         themePreference={themePreference}
         onSetTheme={onSetTheme}
+        floorBackground={floorBackground}
+        onUpdateFloorBackground={onUpdateFloorBackground}
       />
     );
   }
@@ -112,7 +172,7 @@ export function ControlPanel({
   if (mode === "view") {
     // Multi-selection → bulk control
     if (multiSelectCount > 1 && floor) {
-      return (
+      return wrap(
         <BulkControl
           floor={floor}
           selectedRoomIds={selectedRoomIds}
@@ -126,7 +186,7 @@ export function ControlPanel({
     }
     // Single entity → entity control
     if (selectedEntity) {
-      return (
+      return wrap(
         <EntityControl
           placement={selectedEntity}
           entity={hass.states[selectedEntity.entity_id]}
@@ -141,7 +201,7 @@ export function ControlPanel({
     }
     // No selection → show favorites panel or editor
     if (showFavoriteEditor) {
-      return (
+      return wrap(
         <FavoriteEditor
           hass={hass}
           isDark={isDark}
@@ -151,7 +211,7 @@ export function ControlPanel({
         />
       );
     }
-    return (
+    return wrap(
       <FavoritesPanel
         favorites={favorites}
         hass={hass}
@@ -164,17 +224,17 @@ export function ControlPanel({
 
   // Edit mode: place tool -> entity browser
   if (activeTool === "place") {
-    return <EntityBrowser hass={hass} isDark={isDark} />;
+    return wrap(<EntityBrowser hass={hass} isDark={isDark} isMobile={isMobile} onTapPlace={onTapPlace} onDragStartEntity={onDragStartEntity} />);
   }
 
   // Edit mode: furniture tool -> furniture browser
   if (activeTool === "furniture") {
-    return <FurnitureBrowser isDark={isDark} />;
+    return wrap(<FurnitureBrowser isDark={isDark} />);
   }
 
   // Edit mode: multi-selection -> bulk control
   if (multiSelectCount > 1 && floor) {
-    return (
+    return wrap(
       <BulkControl
         floor={floor}
         selectedRoomIds={selectedRoomIds}
@@ -189,7 +249,7 @@ export function ControlPanel({
 
   // Edit mode: room selected -> room editor
   if (selectedRoom && floor) {
-    return (
+    return wrap(
       <RoomEditor
         room={selectedRoom}
         floor={floor}
@@ -206,7 +266,7 @@ export function ControlPanel({
 
   // Edit mode: entity selected -> entity control
   if (selectedEntity) {
-    return (
+    return wrap(
       <EntityControl
         placement={selectedEntity}
         entity={hass.states[selectedEntity.entity_id]}
@@ -222,7 +282,7 @@ export function ControlPanel({
 
   // Edit mode: furniture selected -> furniture control
   if (selectedFurniture && floor) {
-    return (
+    return wrap(
       <FurnitureControl
         placement={selectedFurniture}
         gridSize={settings.grid_size}

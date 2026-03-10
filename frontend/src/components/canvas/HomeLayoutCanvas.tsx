@@ -1,12 +1,13 @@
-import { useState, useRef, useCallback, useEffect, forwardRef, useImperativeHandle } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo, forwardRef, useImperativeHandle } from "react";
 import { Stage, Layer, Rect, Circle, Text, Line } from "react-konva";
 import type { KonvaEventObject } from "konva/lib/Node";
 import { GridLayer } from "./GridLayer";
 import { RoomLayer } from "./RoomLayer";
 import { EntityLayer } from "./EntityLayer";
 import { FurnitureLayer } from "./FurnitureLayer";
-import { useThemeConfig, BRAND } from "../../theme";
-import type { FloorConfig, Point, CanvasTool, AppMode, Room, HomeAssistant, FurniturePlacement } from "../../types";
+import { useThemeConfig, DomIcon, BRAND } from "../../theme";
+import type { FloorConfig, FloorBackground, Point, CanvasTool, AppMode, Room, HomeAssistant, FurniturePlacement } from "../../types";
+import { getPreset } from "../../backgroundPresets";
 
 interface HomeLayoutCanvasProps {
   floor: FloorConfig | null;
@@ -35,11 +36,54 @@ interface HomeLayoutCanvasProps {
   isDark: boolean;
   defaultIconSize?: number;
   domainIconSizes?: Record<string, number>;
+  /** Entity ID currently being dragged from the browser (for preview) */
+  draggingEntityId?: string | null;
+  /** Client-coordinate position of the dragged entity (for preview + drop) */
+  dragClientPos?: { x: number; y: number } | null;
 }
 
 const ZOOM_STEP = 1.3;
 const PAN_THRESHOLD = 4; // px movement before it counts as a drag
 const QUERY_DEBOUNCE_MS = 400;
+const MIN_SHAPE_SIZE = 10; // minimum size to create a shape (canvas px)
+
+function generateRect(start: Point, end: Point): Point[] {
+  return [
+    { x: start.x, y: start.y },
+    { x: end.x, y: start.y },
+    { x: end.x, y: end.y },
+    { x: start.x, y: end.y },
+  ];
+}
+
+function generateCircle(center: Point, edge: Point, segments = 32): Point[] {
+  const r = Math.hypot(edge.x - center.x, edge.y - center.y);
+  return Array.from({ length: segments }, (_, i) => {
+    const angle = (i / segments) * Math.PI * 2;
+    return { x: center.x + r * Math.cos(angle), y: center.y + r * Math.sin(angle) };
+  });
+}
+
+function generateTriangle(start: Point, end: Point): Point[] {
+  const cx = (start.x + end.x) / 2;
+  return [
+    { x: cx, y: start.y },
+    { x: end.x, y: end.y },
+    { x: start.x, y: end.y },
+  ];
+}
+
+function isShapeTool(tool: CanvasTool): tool is "draw-rect" | "draw-circle" | "draw-triangle" {
+  return tool === "draw-rect" || tool === "draw-circle" || tool === "draw-triangle";
+}
+
+function generateShapePoints(tool: "draw-rect" | "draw-circle" | "draw-triangle", start: Point, end: Point): Point[] {
+  switch (tool) {
+    case "draw-rect": return generateRect(start, end);
+    case "draw-circle": return generateCircle(start, end);
+    case "draw-triangle": return generateTriangle(start, end);
+  }
+}
 
 /** Read viewport params (x, y, scale, rotation) from the current URL search params */
 function readViewportParams(): { x: number | null; y: number | null; scale: number | null; rotation: number | null } {
@@ -110,6 +154,21 @@ function posForCanvasPoint(
   };
 }
 
+/** Inverse of toCanvas: convert canvas coordinates back to screen coordinates */
+function canvasToScreen(
+  canvasX: number, canvasY: number,
+  posX: number, posY: number,
+  scale: number, rotDeg: number,
+): Point {
+  const rad = (rotDeg * Math.PI) / 180;
+  const cosR = Math.cos(rad);
+  const sinR = Math.sin(rad);
+  return {
+    x: posX + scale * (canvasX * cosR - canvasY * sinR),
+    y: posY + scale * (canvasX * sinR + canvasY * cosR),
+  };
+}
+
 function hexToRgba(hex: string, alpha: number): string {
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
@@ -144,6 +203,10 @@ export interface HomeLayoutCanvasHandle {
   resetView: () => void;
   rotateView: () => void;
   rotation: number;
+  /** Returns the canvas-coordinate point at the center of the viewport */
+  getViewportCenter: () => Point;
+  /** Convert client coords to snapped canvas coords (for pointer-based entity drop) */
+  clientToCanvas: (clientX: number, clientY: number) => Point | null;
 }
 
 export const HomeLayoutCanvas = forwardRef<HomeLayoutCanvasHandle, HomeLayoutCanvasProps>(
@@ -162,7 +225,7 @@ export const HomeLayoutCanvas = forwardRef<HomeLayoutCanvasHandle, HomeLayoutCan
       onMoveRoom,
       onMoveEntity,
       onUpdateRoom,
-      onDropEntity,
+      onDropEntity: _onDropEntity,
       selectedFurnitureIds,
       onSelectFurniture,
       onMoveFurniture,
@@ -175,6 +238,8 @@ export const HomeLayoutCanvas = forwardRef<HomeLayoutCanvasHandle, HomeLayoutCan
       isDark,
       defaultIconSize,
       domainIconSizes,
+      draggingEntityId,
+      dragClientPos,
     },
     ref
   ) {
@@ -192,8 +257,22 @@ export const HomeLayoutCanvas = forwardRef<HomeLayoutCanvasHandle, HomeLayoutCan
       return vp.rotation ?? 0;
     });
     const [drawingPoints, setDrawingPoints] = useState<Point[]>([]);
+    const [shapeStart, setShapeStart] = useState<Point | null>(null);
+    const [shapePreview, setShapePreview] = useState<Point[] | null>(null);
     const [isPanning, setIsPanning] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
+
+    // Track container size reactively
+    const [containerSize, setContainerSize] = useState<{ w: number; h: number }>({ w: 800, h: 600 });
+    useEffect(() => {
+      const el = containerRef.current;
+      if (!el) return;
+      const update = () => setContainerSize({ w: el.clientWidth, h: el.clientHeight });
+      update();
+      const ro = new ResizeObserver(update);
+      ro.observe(el);
+      return () => ro.disconnect();
+    }, []);
 
     // Pointer tracking refs
     const panStartRef = useRef<{ x: number; y: number } | null>(null);
@@ -302,6 +381,26 @@ export const HomeLayoutCanvas = forwardRef<HomeLayoutCanvasHandle, HomeLayoutCan
       setStagePos(posForCanvasPoint(canvasPt.x, canvasPt.y, cx, cy, stageScale, newRotation));
     }, [stageRotation, stageScale, pos]);
 
+    const getViewportCenter = useCallback((): Point => {
+      const el = containerRef.current;
+      const cw = el ? el.clientWidth : 800;
+      const ch = el ? el.clientHeight : 600;
+      return toCanvas(cw / 2, ch / 2, pos.x, pos.y, stageScale, stageRotation);
+    }, [pos, stageScale, stageRotation]);
+
+    const clientToCanvas = useCallback((clientX: number, clientY: number): Point | null => {
+      const el = containerRef.current;
+      if (!el) return null;
+      const rect = el.getBoundingClientRect();
+      const sx = clientX - rect.left;
+      const sy = clientY - rect.top;
+      const cp = toCanvas(sx, sy, pos.x, pos.y, stageScale, stageRotation);
+      return {
+        x: gridEnabled ? Math.round(cp.x / gridSize) * gridSize : cp.x,
+        y: gridEnabled ? Math.round(cp.y / gridSize) * gridSize : cp.y,
+      };
+    }, [pos, stageScale, stageRotation, gridSize, gridEnabled]);
+
     useImperativeHandle(
       ref,
       () => ({
@@ -310,8 +409,10 @@ export const HomeLayoutCanvas = forwardRef<HomeLayoutCanvasHandle, HomeLayoutCan
         resetView: handleResetView,
         rotateView: handleRotateView,
         rotation: stageRotation,
+        getViewportCenter,
+        clientToCanvas,
       }),
-      [handleZoomIn, handleZoomOut, handleResetView, handleRotateView, stageRotation]
+      [handleZoomIn, handleZoomOut, handleResetView, handleRotateView, stageRotation, getViewportCenter, clientToCanvas]
     );
 
     /* ─── Scroll-wheel zoom (Konva) ─── */
@@ -361,6 +462,18 @@ export const HomeLayoutCanvas = forwardRef<HomeLayoutCanvasHandle, HomeLayoutCan
 
         // Drawing tool: don't pan, clicks are handled by handleStageClick
         if (activeTool === "draw") return;
+
+        // Shape drawing tools: start drag
+        if (isShapeTool(activeTool)) {
+          const rect = containerRef.current?.getBoundingClientRect();
+          if (rect) {
+            const canvasPoint = screenToCanvas(clientX - rect.left, clientY - rect.top);
+            const snapped = { x: snapToGrid(canvasPoint.x), y: snapToGrid(canvasPoint.y) };
+            setShapeStart(snapped);
+            setShapePreview(null);
+          }
+          return;
+        }
 
         // Marquee: multiselect tool always, or shift+select tool
         const wantMarquee =
@@ -414,6 +527,16 @@ export const HomeLayoutCanvas = forwardRef<HomeLayoutCanvasHandle, HomeLayoutCan
           return;
         }
 
+        // Shape drawing preview
+        if (shapeStart && isShapeTool(activeTool) && containerRef.current) {
+          const rect = containerRef.current.getBoundingClientRect();
+          const canvasPoint = screenToCanvas(e.clientX - rect.left, e.clientY - rect.top);
+          const snapped = { x: snapToGrid(canvasPoint.x), y: snapToGrid(canvasPoint.y) };
+          setShapePreview(generateShapePoints(activeTool, shapeStart, snapped));
+          hasMovedRef.current = true;
+          return;
+        }
+
         // Marquee
         if (marqueeActiveRef.current && marqueeStart && containerRef.current) {
           const rect = containerRef.current.getBoundingClientRect();
@@ -425,7 +548,7 @@ export const HomeLayoutCanvas = forwardRef<HomeLayoutCanvasHandle, HomeLayoutCan
           hasMovedRef.current = true;
         }
       },
-      [isPanning, marqueeStart, pos, stageScale, stageRotation]
+      [isPanning, marqueeStart, shapeStart, activeTool, pos, stageScale, stageRotation]
     );
 
     /* ─── Container: pointerup — finish pan or marquee ─── */
@@ -435,6 +558,20 @@ export const HomeLayoutCanvas = forwardRef<HomeLayoutCanvasHandle, HomeLayoutCan
         if (isPanning) {
           setIsPanning(false);
           panStartRef.current = null;
+        }
+
+        // Finish shape drawing
+        if (shapeStart && isShapeTool(activeTool) && containerRef.current) {
+          const rect = containerRef.current.getBoundingClientRect();
+          const canvasPoint = screenToCanvas(e.clientX - rect.left, e.clientY - rect.top);
+          const snapped = { x: snapToGrid(canvasPoint.x), y: snapToGrid(canvasPoint.y) };
+          const dist = Math.hypot(snapped.x - shapeStart.x, snapped.y - shapeStart.y);
+          if (dist >= MIN_SHAPE_SIZE) {
+            const points = generateShapePoints(activeTool, shapeStart, snapped);
+            onAddRoom(points);
+          }
+          setShapeStart(null);
+          setShapePreview(null);
         }
 
         // Finish marquee
@@ -475,7 +612,7 @@ export const HomeLayoutCanvas = forwardRef<HomeLayoutCanvasHandle, HomeLayoutCan
           setMarqueeEnd(null);
         }
       },
-      [isPanning, marqueeStart, marqueeEnd, floor, activeTool, onMarqueeSelect]
+      [isPanning, shapeStart, marqueeStart, marqueeEnd, floor, activeTool, onMarqueeSelect, onAddRoom, pos, stageScale, stageRotation, gridSize, gridEnabled]
     );
 
     /* ─── Container: pointerleave — cleanup ─── */
@@ -489,7 +626,11 @@ export const HomeLayoutCanvas = forwardRef<HomeLayoutCanvasHandle, HomeLayoutCan
         setMarqueeStart(null);
         setMarqueeEnd(null);
       }
-    }, [isPanning]);
+      if (shapeStart) {
+        setShapeStart(null);
+        setShapePreview(null);
+      }
+    }, [isPanning, shapeStart]);
 
     /* ─── Pinch-to-zoom (touch) on container ─── */
     const handleTouchMove = useCallback(
@@ -658,10 +799,9 @@ export const HomeLayoutCanvas = forwardRef<HomeLayoutCanvasHandle, HomeLayoutCan
       [floor, onUpdateRoom]
     );
 
-    /* ─── Drag-and-drop entity placement ─── */
+    /* ─── HTML5 drag-and-drop (furniture only) ─── */
     const handleDragOver = useCallback((e: React.DragEvent) => {
-      if (e.dataTransfer.types.includes("application/entity-id") ||
-          e.dataTransfer.types.includes("application/furniture-type")) {
+      if (e.dataTransfer.types.includes("application/furniture-type")) {
         e.preventDefault();
         e.dataTransfer.dropEffect = "copy";
       }
@@ -670,35 +810,35 @@ export const HomeLayoutCanvas = forwardRef<HomeLayoutCanvasHandle, HomeLayoutCan
     const handleDrop = useCallback(
       (e: React.DragEvent) => {
         if (!containerRef.current) return;
-
         const rect = containerRef.current.getBoundingClientRect();
         const canvasPoint = screenToCanvas(e.clientX - rect.left, e.clientY - rect.top);
-        const x = gridEnabled
-          ? Math.round(canvasPoint.x / gridSize) * gridSize
-          : canvasPoint.x;
-        const y = gridEnabled
-          ? Math.round(canvasPoint.y / gridSize) * gridSize
-          : canvasPoint.y;
-
-        const entityId = e.dataTransfer.getData("application/entity-id");
-        if (entityId) {
-          e.preventDefault();
-          onDropEntity(entityId, x, y);
-          return;
-        }
+        const x = gridEnabled ? Math.round(canvasPoint.x / gridSize) * gridSize : canvasPoint.x;
+        const y = gridEnabled ? Math.round(canvasPoint.y / gridSize) * gridSize : canvasPoint.y;
 
         const furnitureType = e.dataTransfer.getData("application/furniture-type");
         if (furnitureType) {
           e.preventDefault();
           onDropFurniture(furnitureType, x, y);
-          return;
         }
       },
-      [stagePos, stageScale, stageRotation, gridSize, gridEnabled, onDropEntity, onDropFurniture]
+      [stagePos, stageScale, stageRotation, gridSize, gridEnabled, onDropFurniture]
     );
 
-    const containerWidth = containerRef.current?.clientWidth ?? 800;
-    const containerHeight = containerRef.current?.clientHeight ?? 600;
+    /* ─── Pointer-based entity drag preview ─── */
+    const entityDragPreview = useMemo(() => {
+      if (!dragClientPos || !draggingEntityId || !containerRef.current) return null;
+      const rect = containerRef.current.getBoundingClientRect();
+      const sx = dragClientPos.x - rect.left;
+      const sy = dragClientPos.y - rect.top;
+      const cp = toCanvas(sx, sy, pos.x, pos.y, stageScale, stageRotation);
+      const snappedX = gridEnabled ? Math.round(cp.x / gridSize) * gridSize : cp.x;
+      const snappedY = gridEnabled ? Math.round(cp.y / gridSize) * gridSize : cp.y;
+      const screenPt = canvasToScreen(snappedX, snappedY, pos.x, pos.y, stageScale, stageRotation);
+      return { x: screenPt.x, y: screenPt.y, canvasX: snappedX, canvasY: snappedY };
+    }, [dragClientPos, draggingEntityId, pos, stageScale, stageRotation, gridSize, gridEnabled]);
+
+    const containerWidth = containerSize.w;
+    const containerHeight = containerSize.h;
 
     // Marquee rect in canvas coords
     const marqueeRect =
@@ -716,7 +856,7 @@ export const HomeLayoutCanvas = forwardRef<HomeLayoutCanvasHandle, HomeLayoutCan
       ? "move"
       : isMarqueeActive
         ? "crosshair"
-        : activeTool === "draw"
+        : activeTool === "draw" || isShapeTool(activeTool)
           ? "crosshair"
           : activeTool === "multiselect"
             ? "crosshair"
@@ -740,6 +880,7 @@ export const HomeLayoutCanvas = forwardRef<HomeLayoutCanvasHandle, HomeLayoutCan
         onDragOver={handleDragOver}
         onDrop={handleDrop}
       >
+        <FloorBackgroundDiv bg={floor?.background} isDark={isDark} />
         <Stage
           width={containerWidth}
           height={containerHeight}
@@ -756,76 +897,77 @@ export const HomeLayoutCanvas = forwardRef<HomeLayoutCanvasHandle, HomeLayoutCan
           onDblClick={handleStageDblClick}
           onDblTap={handleStageDblClick}
         >
-          <Layer>
-            <GridLayer
-              viewportWidth={containerWidth}
-              viewportHeight={containerHeight}
-              stageX={pos.x}
-              stageY={pos.y}
-              stageScale={stageScale}
-              gridSize={gridSize}
-              visible={gridEnabled}
-              isDark={isDark}
-            />
-          </Layer>
-          <Layer>
-            <RoomLayer
-              rooms={floor?.rooms ?? []}
-              selectedRoomIds={selectedRoomIds}
-              mode={mode}
-              activeTool={activeTool}
-              drawingPoints={drawingPoints}
-              onSelectRoom={onSelectRoom}
-              onMoveRoom={onMoveRoom}
-              onMoveRoomPoint={handleMoveRoomPoint}
-              onMoveRoomEdge={handleMoveRoomEdge}
-              gridSize={gridSize}
-              gridEnabled={gridEnabled}
-              isDark={isDark}
-              stageRotation={stageRotation}
-              groupDragOffset={isMultiSelect ? groupDragOffset : null}
-              onGroupDragMove={isMultiSelect ? setGroupDragOffset : undefined}
-              onGroupDragEnd={isMultiSelect ? () => setGroupDragOffset(null) : undefined}
-            />
-          </Layer>
-          <Layer>
-            <FurnitureLayer
-              furniture={floor?.furniture ?? []}
-              selectedFurnitureIds={selectedFurnitureIds}
-              mode={mode}
-              activeTool={activeTool}
-              onSelectFurniture={onSelectFurniture}
-              onMoveFurniture={onMoveFurniture}
-              onUpdateFurniture={onUpdateFurniture}
-              gridSize={gridSize}
-              gridEnabled={gridEnabled}
-              isDark={isDark}
-              stageRotation={stageRotation}
-              groupDragOffset={isMultiSelect ? groupDragOffset : null}
-              onGroupDragMove={isMultiSelect ? setGroupDragOffset : undefined}
-              onGroupDragEnd={isMultiSelect ? () => setGroupDragOffset(null) : undefined}
-            />
-          </Layer>
-          <Layer>
-            <EntityLayer
-              entities={floor?.entities ?? []}
-              hass={hass}
-              selectedEntityIds={selectedEntityIds}
-              mode={mode}
-              activeTool={activeTool}
-              onSelectEntity={onSelectEntity}
-              onMoveEntity={onMoveEntity}
-              gridSize={gridSize}
-              gridEnabled={gridEnabled}
-              isDark={isDark}
-              stageRotation={stageRotation}
-              groupDragOffset={isMultiSelect ? groupDragOffset : null}
-              onGroupDragMove={isMultiSelect ? setGroupDragOffset : undefined}
-              onGroupDragEnd={isMultiSelect ? () => setGroupDragOffset(null) : undefined}
-              defaultIconSize={defaultIconSize}
-              domainIconSizes={domainIconSizes}
-            />
-          </Layer>
+              <Layer>
+                <GridLayer
+                  viewportWidth={containerWidth}
+                  viewportHeight={containerHeight}
+                  stageX={pos.x}
+                  stageY={pos.y}
+                  stageScale={stageScale}
+                  gridSize={gridSize}
+                  visible={gridEnabled}
+                  isDark={isDark}
+                />
+              </Layer>
+              <Layer>
+                <RoomLayer
+                  rooms={floor?.rooms ?? []}
+                  selectedRoomIds={selectedRoomIds}
+                  mode={mode}
+                  activeTool={activeTool}
+                  drawingPoints={drawingPoints}
+                  shapePreview={shapePreview}
+                  onSelectRoom={onSelectRoom}
+                  onMoveRoom={onMoveRoom}
+                  onMoveRoomPoint={handleMoveRoomPoint}
+                  onMoveRoomEdge={handleMoveRoomEdge}
+                  gridSize={gridSize}
+                  gridEnabled={gridEnabled}
+                  isDark={isDark}
+                  stageRotation={stageRotation}
+                  groupDragOffset={isMultiSelect ? groupDragOffset : null}
+                  onGroupDragMove={isMultiSelect ? setGroupDragOffset : undefined}
+                  onGroupDragEnd={isMultiSelect ? () => setGroupDragOffset(null) : undefined}
+                />
+              </Layer>
+              <Layer>
+                <FurnitureLayer
+                  furniture={floor?.furniture ?? []}
+                  selectedFurnitureIds={selectedFurnitureIds}
+                  mode={mode}
+                  activeTool={activeTool}
+                  onSelectFurniture={onSelectFurniture}
+                  onMoveFurniture={onMoveFurniture}
+                  onUpdateFurniture={onUpdateFurniture}
+                  gridSize={gridSize}
+                  gridEnabled={gridEnabled}
+                  isDark={isDark}
+                  stageRotation={stageRotation}
+                  groupDragOffset={isMultiSelect ? groupDragOffset : null}
+                  onGroupDragMove={isMultiSelect ? setGroupDragOffset : undefined}
+                  onGroupDragEnd={isMultiSelect ? () => setGroupDragOffset(null) : undefined}
+                />
+              </Layer>
+              <Layer>
+                <EntityLayer
+                  entities={floor?.entities ?? []}
+                  hass={hass}
+                  selectedEntityIds={selectedEntityIds}
+                  mode={mode}
+                  activeTool={activeTool}
+                  onSelectEntity={onSelectEntity}
+                  onMoveEntity={onMoveEntity}
+                  gridSize={gridSize}
+                  gridEnabled={gridEnabled}
+                  isDark={isDark}
+                  stageRotation={stageRotation}
+                  groupDragOffset={isMultiSelect ? groupDragOffset : null}
+                  onGroupDragMove={isMultiSelect ? setGroupDragOffset : undefined}
+                  onGroupDragEnd={isMultiSelect ? () => setGroupDragOffset(null) : undefined}
+                  defaultIconSize={defaultIconSize}
+                  domainIconSizes={domainIconSizes}
+                />
+              </Layer>
           {/* Origin marker + axes — edit mode only, topmost, non-interactive */}
           {mode === "edit" && (() => {
             // Compute visible canvas bounds for infinite-looking axes
@@ -875,7 +1017,123 @@ export const HomeLayoutCanvas = forwardRef<HomeLayoutCanvasHandle, HomeLayoutCan
             )}
           </Layer>
         </Stage>
+        {/* Pointer-based entity drag preview */}
+        {entityDragPreview && (
+          <DragPreviewBadge
+            x={entityDragPreview.x}
+            y={entityDragPreview.y}
+            isDark={isDark}
+            entityId={draggingEntityId}
+            hass={hass}
+            iconSize={(defaultIconSize ?? 36) * 0.5 * stageScale}
+          />
+        )}
       </div>
     );
   }
 );
+
+/** Floating badge shown while dragging an entity over the canvas */
+function DragPreviewBadge({ x, y, isDark, entityId, hass, iconSize }: {
+  x: number; y: number; isDark: boolean;
+  entityId?: string | null;
+  hass: HomeAssistant;
+  iconSize: number;
+}) {
+  const { resolveEntityIcon, getDomainColor } = useThemeConfig();
+  const domain = entityId ? entityId.split(".")[0] : null;
+  const entity = entityId ? hass.states[entityId] : undefined;
+  const state = entity?.state ?? "off";
+  const isActive = state === "on" || state === "open" || state === "playing";
+  const resolved = domain ? resolveEntityIcon(domain, state) : null;
+  const accent = domain ? getDomainColor(domain) : BRAND;
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        left: x,
+        top: y,
+        transform: "translate(-50%, -50%)",
+        pointerEvents: "none",
+        zIndex: 50,
+        opacity: 0.85,
+      }}
+    >
+      {resolved ? (
+        <DomIcon icon={resolved.icon} size={iconSize} fill={isActive ? accent : isDark ? "#888" : "#999"} />
+      ) : (
+        <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none" stroke={BRAND} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+      )}
+    </div>
+  );
+}
+
+/** Renders the floor background (color, image, or animated preset) */
+const injectedKeyframes = new Set<string>();
+function FloorBackgroundDiv({ bg, isDark }: { bg: FloorBackground | undefined; isDark: boolean }) {
+  if (!bg || bg.type === "none") return null;
+
+  const opacity = bg.opacity ?? 1;
+
+  if (bg.type === "color" && bg.color) {
+    return (
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          backgroundColor: bg.color,
+          opacity,
+          pointerEvents: "none",
+        }}
+      />
+    );
+  }
+
+  if (bg.type === "image" && bg.image) {
+    return (
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          backgroundImage: `url(${bg.image})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          opacity,
+          pointerEvents: "none",
+        }}
+      />
+    );
+  }
+
+  if (bg.type === "preset" && bg.preset) {
+    const preset = getPreset(bg.preset);
+    if (!preset) return null;
+
+    // Inject keyframes once
+    if (preset.keyframes && !injectedKeyframes.has(preset.id)) {
+      const sheet = document.createElement("style");
+      sheet.textContent = preset.keyframes;
+      document.head.appendChild(sheet);
+      injectedKeyframes.add(preset.id);
+    }
+
+    return (
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          opacity,
+          pointerEvents: "none",
+          backgroundColor: isDark ? "#111" : "#f5f5f5",
+          ...preset.style,
+        }}
+      />
+    );
+  }
+
+  return null;
+}

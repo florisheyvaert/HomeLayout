@@ -5,6 +5,9 @@ import { useThemeConfig, DomIcon, BRAND } from "../../theme";
 interface EntityBrowserProps {
   hass: HomeAssistant;
   isDark: boolean;
+  isMobile?: boolean;
+  onTapPlace?: (entityId: string) => void;
+  onDragStartEntity?: (entityId: string) => void;
 }
 
 const SUPPORTED_DOMAINS = [
@@ -37,7 +40,7 @@ function getFriendlyName(entity: HassEntity): string {
   return (entity.attributes?.friendly_name as string) ?? entity.entity_id.split(".")[1];
 }
 
-export function EntityBrowser({ hass, isDark }: EntityBrowserProps) {
+export function EntityBrowser({ hass, isDark, isMobile, onTapPlace, onDragStartEntity }: EntityBrowserProps) {
   const [search, setSearch] = useState("");
   const [domainFilter, setDomainFilter] = useState<string | null>(null);
   const { resolveEntityIcon, colors, getDomainColor } = useThemeConfig();
@@ -81,9 +84,9 @@ export function EntityBrowser({ hass, isDark }: EntityBrowserProps) {
     color: "var(--fp-text)",
   };
 
-  const handleDragStart = (e: React.DragEvent, entityId: string) => {
-    e.dataTransfer.setData("application/entity-id", entityId);
-    e.dataTransfer.effectAllowed = "copy";
+  const handlePointerDown = (e: React.PointerEvent, entityId: string) => {
+    e.preventDefault();
+    onDragStartEntity?.(entityId);
   };
 
   return (
@@ -92,7 +95,7 @@ export function EntityBrowser({ hass, isDark }: EntityBrowserProps) {
         Entities
       </h3>
       <p className="text-xs" style={{ color: "var(--fp-text-secondary)" }}>
-        Drag an entity onto the floor plan.
+        {isMobile ? "Tap an entity to place it on the floor plan." : "Drag an entity onto the floor plan."}
       </p>
 
       {/* Search */}
@@ -101,15 +104,18 @@ export function EntityBrowser({ hass, isDark }: EntityBrowserProps) {
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         placeholder="Search entities..."
-        className="w-full px-3 py-2 rounded border text-sm focus:outline-none focus:border-blue-500"
+        className="w-full px-3 py-2.5 rounded-lg border text-sm focus:outline-none focus:border-blue-500"
         style={inputStyle}
       />
 
       {/* Domain filter chips */}
-      <div className="flex flex-wrap gap-1">
+      <div
+        className="grid gap-1.5"
+        style={{ gridTemplateColumns: "repeat(auto-fill, minmax(36px, 1fr))" }}
+      >
         <button
           onClick={() => setDomainFilter(null)}
-          className="px-2 py-0.5 rounded text-xs"
+          className="rounded-lg text-xs"
           style={{
             backgroundColor: !domainFilter
               ? BRAND
@@ -117,6 +123,12 @@ export function EntityBrowser({ hass, isDark }: EntityBrowserProps) {
                 ? "#333"
                 : "#e8e8e8",
             color: !domainFilter ? "#fff" : "var(--fp-text)",
+            height: 36,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            border: "none",
+            cursor: "pointer",
           }}
         >
           All
@@ -129,7 +141,7 @@ export function EntityBrowser({ hass, isDark }: EntityBrowserProps) {
               onClick={() =>
                 setDomainFilter(domainFilter === domain ? null : domain)
               }
-              className="px-2 py-0.5 rounded text-xs"
+              className="rounded-lg"
               style={{
                 backgroundColor:
                   domainFilter === domain
@@ -138,9 +150,15 @@ export function EntityBrowser({ hass, isDark }: EntityBrowserProps) {
                       ? "#333"
                       : "#e8e8e8",
                 color: domainFilter === domain ? "#fff" : "var(--fp-text)",
+                height: 36,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                border: "none",
+                cursor: "pointer",
               }}
             >
-              <DomIcon icon={icon} size={14} />
+              <DomIcon icon={icon} size={18} />
             </button>
           );
         })}
@@ -171,21 +189,31 @@ export function EntityBrowser({ hass, isDark }: EntityBrowserProps) {
                   {groupedEntities[domain].map((entity) => (
                     <div
                       key={entity.entity_id}
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, entity.entity_id)}
-                      className="w-full text-left px-2 py-1.5 rounded text-sm flex items-center gap-2 cursor-grab active:cursor-grabbing select-none"
+                      onPointerDown={!isMobile ? (e) => handlePointerDown(e, entity.entity_id) : undefined}
+                      onClick={isMobile && onTapPlace ? () => onTapPlace(entity.entity_id) : undefined}
+                      className={`entity-row w-full text-left px-3 py-2.5 rounded-lg text-sm flex items-center gap-2.5 select-none ${
+                        isMobile ? "cursor-pointer active:opacity-70" : "cursor-grab active:cursor-grabbing"
+                      }`}
                       style={{
                         backgroundColor: "transparent",
                         color: "var(--fp-text)",
                       }}
-                      onMouseEnter={(e) =>
-                        (e.currentTarget.style.backgroundColor =
-                          "var(--fp-hover)")
-                      }
-                      onMouseLeave={(e) =>
-                        (e.currentTarget.style.backgroundColor = "transparent")
-                      }
+                      onMouseEnter={!isMobile ? (e) => (e.currentTarget.style.backgroundColor = "var(--fp-hover)") : undefined}
+                      onMouseLeave={!isMobile ? (e) => (e.currentTarget.style.backgroundColor = "transparent") : undefined}
                     >
+                      {/* Drag grip — desktop only */}
+                      {!isMobile && (
+                        <svg
+                          className="entity-drag-grip"
+                          width="12" height="12" viewBox="0 0 12 12"
+                          fill="currentColor"
+                          style={{ flexShrink: 0, opacity: 0, transition: "opacity 0.15s", color: "var(--fp-text-secondary)" }}
+                        >
+                          <circle cx="4" cy="2" r="1.2" /><circle cx="8" cy="2" r="1.2" />
+                          <circle cx="4" cy="6" r="1.2" /><circle cx="8" cy="6" r="1.2" />
+                          <circle cx="4" cy="10" r="1.2" /><circle cx="8" cy="10" r="1.2" />
+                        </svg>
+                      )}
                       <span
                         className="w-2 h-2 rounded-full flex-shrink-0"
                         style={{
@@ -197,15 +225,26 @@ export function EntityBrowser({ hass, isDark }: EntityBrowserProps) {
                               : colors.stateInactive,
                         }}
                       />
-                      <span className="truncate">
+                      <span className="truncate flex-1">
                         {getFriendlyName(entity)}
                       </span>
                       <span
-                        className="text-xs ml-auto flex-shrink-0"
+                        className="text-xs flex-shrink-0"
                         style={{ color: "var(--fp-text-secondary)" }}
                       >
                         {entity.state}
                       </span>
+                      {/* Tap-to-place icon — mobile only */}
+                      {isMobile && (
+                        <svg
+                          width="16" height="16" viewBox="0 0 24 24"
+                          fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                          style={{ flexShrink: 0, color: BRAND }}
+                        >
+                          <line x1="12" y1="5" x2="12" y2="19" />
+                          <line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                      )}
                     </div>
                   ))}
                 </div>

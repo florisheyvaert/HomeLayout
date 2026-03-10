@@ -96,7 +96,7 @@ export function BulkControl({
     }
   };
 
-  const btnBase = "flex-1 py-2 rounded-lg text-sm font-medium transition-all";
+  const btnBase = "flex-1 py-3 rounded-lg text-sm font-medium transition-all";
 
   return (
     <div className="p-4 space-y-4">
@@ -234,7 +234,7 @@ export function BulkControl({
           <hr style={{ borderColor: "var(--fp-border)" }} />
           <button
             onClick={onDeleteSelected}
-            className="w-full px-3 py-2 rounded text-sm bg-red-600/10 text-red-500 hover:bg-red-600/20"
+            className="w-full px-3 py-3 rounded-lg text-sm font-medium bg-red-600/10 text-red-500 hover:bg-red-600/20"
           >
             Delete Selected ({totalCount})
           </button>

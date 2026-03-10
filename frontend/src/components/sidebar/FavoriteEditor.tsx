@@ -112,8 +112,8 @@ export function FavoriteEditor({ hass, isDark, favorites, onAddFavorite, onClose
         <button
           onClick={onClose}
           style={{
-            width: 32,
-            height: 32,
+            width: 36,
+            height: 36,
             borderRadius: 8,
             border: "none",
             backgroundColor: isDark ? "#333" : "#e8e8e8",
@@ -138,18 +138,27 @@ export function FavoriteEditor({ hass, isDark, favorites, onAddFavorite, onClose
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         placeholder="Search entities..."
-        className="w-full px-3 py-2 rounded border text-sm focus:outline-none focus:border-blue-500"
+        className="w-full px-3 py-2.5 rounded-lg border text-sm focus:outline-none focus:border-blue-500"
         style={inputStyle}
       />
 
       {/* Domain filter chips */}
-      <div className="flex flex-wrap gap-1">
+      <div
+        className="grid gap-1.5"
+        style={{ gridTemplateColumns: "repeat(auto-fill, minmax(36px, 1fr))" }}
+      >
         <button
           onClick={() => setDomainFilter(null)}
-          className="px-2 py-0.5 rounded text-xs"
+          className="rounded-lg text-xs"
           style={{
             backgroundColor: !domainFilter ? BRAND : isDark ? "#333" : "#e8e8e8",
             color: !domainFilter ? "#fff" : "var(--fp-text)",
+            height: 36,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            border: "none",
+            cursor: "pointer",
           }}
         >
           All
@@ -160,13 +169,19 @@ export function FavoriteEditor({ hass, isDark, favorites, onAddFavorite, onClose
             <button
               key={domain}
               onClick={() => setDomainFilter(domainFilter === domain ? null : domain)}
-              className="px-2 py-0.5 rounded text-xs"
+              className="rounded-lg"
               style={{
                 backgroundColor: domainFilter === domain ? BRAND : isDark ? "#333" : "#e8e8e8",
                 color: domainFilter === domain ? "#fff" : "var(--fp-text)",
+                height: 36,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                border: "none",
+                cursor: "pointer",
               }}
             >
-              <DomIcon icon={icon} size={14} />
+              <DomIcon icon={icon} size={18} />
             </button>
           );
         })}
@@ -199,7 +214,7 @@ export function FavoriteEditor({ hass, isDark, favorites, onAddFavorite, onClose
                   return (
                     <div
                       key={entity.entity_id}
-                      className="w-full text-left px-2 py-1.5 rounded text-sm flex items-center gap-2"
+                      className="w-full text-left px-3 py-2.5 rounded-lg text-sm flex items-center gap-2.5"
                       style={{
                         backgroundColor: "transparent",
                         color: "var(--fp-text)",
@@ -218,7 +233,7 @@ export function FavoriteEditor({ hass, isDark, favorites, onAddFavorite, onClose
                             const type = deriveType(domain);
                             onAddFavorite(entity.entity_id, type, name);
                           }}
-                          className="px-2 py-0.5 rounded text-xs font-medium"
+                          className="px-3 py-1.5 rounded-lg text-xs font-medium"
                           style={{
                             backgroundColor: BRAND,
                             color: "#fff",

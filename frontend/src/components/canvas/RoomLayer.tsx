@@ -9,6 +9,7 @@ interface RoomLayerProps {
   mode: AppMode;
   activeTool: CanvasTool;
   drawingPoints: Point[];
+  shapePreview: Point[] | null;
   onSelectRoom: (id: string, shiftKey: boolean) => void;
   onMoveRoom: (id: string, dx: number, dy: number) => void;
   onMoveRoomPoint: (roomId: string, pointIndex: number, x: number, y: number) => void;
@@ -107,6 +108,7 @@ export function RoomLayer({
   mode,
   activeTool,
   drawingPoints,
+  shapePreview,
   onSelectRoom,
   onMoveRoom,
   onMoveRoomPoint,
@@ -357,6 +359,32 @@ export function RoomLayer({
           {drawingPoints.map((point, idx) => (
             <Circle
               key={`draw-${idx}`}
+              x={point.x}
+              y={point.y}
+              radius={4}
+              fill={accentColor}
+              listening={false}
+            />
+          ))}
+        </>
+      )}
+
+      {/* Shape preset preview (rect/circle/triangle) */}
+      {isEditMode && shapePreview && shapePreview.length > 0 && (
+        <>
+          <Line
+            points={shapePreview.flatMap((p) => [p.x, p.y])}
+            closed
+            stroke={accentColor}
+            strokeWidth={2}
+            dash={[5, 5]}
+            fill={roomFill}
+            opacity={0.5}
+            listening={false}
+          />
+          {shapePreview.length <= 4 && shapePreview.map((point, idx) => (
+            <Circle
+              key={`shape-${idx}`}
               x={point.x}
               y={point.y}
               radius={4}

@@ -51,7 +51,7 @@ export function FurnitureBrowser({ isDark }: FurnitureBrowserProps) {
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         placeholder="Search furniture..."
-        className="w-full px-3 py-2 rounded border text-sm focus:outline-none focus:border-blue-500"
+        className="w-full px-3 py-2.5 rounded-lg border text-sm focus:outline-none focus:border-blue-500"
         style={inputStyle}
       />
 
@@ -76,7 +76,7 @@ export function FurnitureBrowser({ isDark }: FurnitureBrowserProps) {
                       key={entry.type}
                       draggable
                       onDragStart={(e) => handleDragStart(e, entry.type)}
-                      className="w-full text-left px-2 py-1.5 rounded text-sm flex items-center gap-2 cursor-grab active:cursor-grabbing select-none"
+                      className="w-full text-left px-3 py-2.5 rounded-lg text-sm flex items-center gap-2.5 cursor-grab active:cursor-grabbing select-none"
                       style={{
                         backgroundColor: "transparent",
                         color: "var(--fp-text)",

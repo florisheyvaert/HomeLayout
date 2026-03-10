@@ -29,7 +29,7 @@ export function CoverControl({ entityId, entity, hass, isDark }: CoverControlPro
     hass.callService("cover", "set_cover_tilt_position", { tilt_position: val }, { entity_id: entityId });
   };
 
-  const btnBase = "flex-1 py-2.5 rounded-lg text-sm font-medium transition-all";
+  const btnBase = "flex-1 py-3 rounded-lg text-sm font-medium transition-all";
   const accent = getDomainColor("cover");
   const warning = colors.stateWarning;
 

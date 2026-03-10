@@ -157,9 +157,18 @@ export function EntityMarker({
     (entity?.attributes?.friendly_name as string) ??
     placement.entity_id.split(".")[1];
 
-  // Build a display string for the entity state
+  // Build a display string for the entity state or attribute
   const stateDisplay = (() => {
     if (!entity) return "unknown";
+
+    // Show specific attribute if configured
+    if (placement.show_attribute) {
+      const attrVal = entity.attributes?.[placement.show_attribute];
+      if (attrVal == null) return `${placement.show_attribute}: ?`;
+      const unit = entity.attributes?.unit_of_measurement as string | undefined;
+      return unit ? `${attrVal} ${unit}` : String(attrVal);
+    }
+
     const s = entity.state;
     const unit = entity.attributes?.unit_of_measurement as string | undefined;
     if (unit) return `${s} ${unit}`;
@@ -178,6 +187,10 @@ export function EntityMarker({
       x={placement.x + (groupDragOffset?.x ?? 0)}
       y={placement.y + (groupDragOffset?.y ?? 0)}
       draggable={isEditMode}
+      dragBoundFunc={gridEnabled ? (pos) => ({
+        x: Math.round(pos.x / gridSize) * gridSize,
+        y: Math.round(pos.y / gridSize) * gridSize,
+      }) : undefined}
       onClick={(e) => onSelect(placement.id, activeTool === "multiselect" || e.evt.shiftKey)}
       onTap={() => onSelect(placement.id, activeTool === "multiselect")}
       onDragStart={() => {

@@ -126,9 +126,10 @@ export function EntityControl({
           </h4>
 
           {/* Display toggles */}
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
+          <label className="flex items-center gap-3 text-sm cursor-pointer py-1">
             <input
               type="checkbox"
+              style={{ width: 18, height: 18 }}
               checked={placement.show_icon !== false}
               onChange={(e) =>
                 onUpdate(placement.id, { show_icon: e.target.checked })
@@ -136,9 +137,10 @@ export function EntityControl({
             />
             Show icon
           </label>
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
+          <label className="flex items-center gap-3 text-sm cursor-pointer py-1">
             <input
               type="checkbox"
+              style={{ width: 18, height: 18 }}
               checked={placement.label_visible}
               onChange={(e) =>
                 onUpdate(placement.id, { label_visible: e.target.checked })
@@ -146,9 +148,10 @@ export function EntityControl({
             />
             Show name
           </label>
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
+          <label className="flex items-center gap-3 text-sm cursor-pointer py-1">
             <input
               type="checkbox"
+              style={{ width: 18, height: 18 }}
               checked={placement.show_state !== false && !!placement.show_state}
               onChange={(e) =>
                 onUpdate(placement.id, { show_state: e.target.checked })
@@ -156,6 +159,38 @@ export function EntityControl({
             />
             Show state
           </label>
+
+          {/* Show attribute picker — only when show_state is enabled */}
+          {placement.show_state && entity && (() => {
+            const attrs = Object.keys(entity.attributes).filter(
+              (k) => k !== "friendly_name" && k !== "icon" && k !== "supported_features"
+            );
+            if (attrs.length === 0) return null;
+            return (
+              <div>
+                <label className="text-xs" style={{ color: "var(--fp-text-secondary)" }}>
+                  Display value
+                </label>
+                <select
+                  value={placement.show_attribute ?? ""}
+                  onChange={(e) =>
+                    onUpdate(placement.id, {
+                      show_attribute: e.target.value || undefined,
+                    })
+                  }
+                  className="w-full mt-1 px-3 py-2.5 rounded-lg text-sm border"
+                  style={inputStyle}
+                >
+                  <option value="">State ({entity.state})</option>
+                  {attrs.map((key) => (
+                    <option key={key} value={key}>
+                      {key} ({String(entity.attributes[key])})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            );
+          })()}
 
           {/* Icon size */}
           <div>
@@ -195,7 +230,7 @@ export function EntityControl({
           {/* Remove */}
           <button
             onClick={() => onRemove(placement.id)}
-            className="w-full px-3 py-2 rounded text-sm bg-red-600/10 text-red-500 hover:bg-red-600/20"
+            className="w-full px-3 py-3 rounded-lg text-sm font-medium bg-red-600/10 text-red-500 hover:bg-red-600/20"
           >
             Remove from Floor Plan
           </button>
