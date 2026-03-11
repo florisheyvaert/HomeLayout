@@ -73,6 +73,7 @@ export interface EntityPlacement {
   x: number;
   y: number;
   icon_size?: number;
+  font_size?: number;
   label_visible: boolean;
   show_icon: boolean;
   show_state: boolean;

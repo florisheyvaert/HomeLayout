@@ -223,8 +223,6 @@ export function EntityMarker({
           if (container) container.style.cursor = "";
         }
       }}
-      scaleX={isDragging ? 1.25 : 1}
-      scaleY={isDragging ? 1.25 : 1}
       opacity={isDragging ? 0.7 : 1}
     >
       {/* Invisible hit area — all visible shapes have listening={false},
@@ -265,8 +263,19 @@ export function EntityMarker({
         />
       )}
 
-      {/* Selection ring */}
-      {isSelected && !isDragging && (
+      {/* Selection indicator */}
+      {isSelected && !isDragging && !isEditMode && (
+        <Circle
+          x={0}
+          y={0}
+          radius={size * 0.44}
+          fill={`${accentColor}22`}
+          stroke={accentColor}
+          strokeWidth={2}
+          listening={false}
+        />
+      )}
+      {isSelected && !isDragging && isEditMode && (
         <Circle
           x={0}
           y={0}
@@ -284,8 +293,9 @@ export function EntityMarker({
           const showIcon = placement.show_icon !== false;
           const showName = placement.label_visible;
           const showState = !!placement.show_state;
-          const nameFontSize = 10;
-          const stateFontSize = 9;
+          const baseFontSize = placement.font_size ?? 10;
+          const nameFontSize = baseFontSize;
+          const stateFontSize = Math.round(baseFontSize * 0.9);
           const lineGap = 2;
 
           // Calculate text block height for vertical centering

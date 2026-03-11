@@ -227,6 +227,43 @@ export function EntityControl({
             />
           </div>
 
+          {/* Font size */}
+          {(placement.label_visible || placement.show_state) && (
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-xs" style={{ color: "var(--fp-text-secondary)" }}>
+                Font size ({placement.font_size ?? 10}px)
+              </label>
+              {placement.font_size != null && (
+                <button
+                  onClick={() => onUpdate(placement.id, { font_size: undefined })}
+                  className="text-xs px-1.5 py-0.5 rounded"
+                  style={{
+                    backgroundColor: isDark ? "#444" : "#ddd",
+                    fontSize: 10,
+                    border: "none",
+                    cursor: "pointer",
+                    color: "var(--fp-text)",
+                  }}
+                >
+                  Reset
+                </button>
+              )}
+            </div>
+            <input
+              type="range"
+              min={6}
+              max={32}
+              value={placement.font_size ?? 10}
+              onChange={(e) =>
+                onUpdate(placement.id, { font_size: Number(e.target.value) })
+              }
+              className="w-full"
+              style={inputStyle}
+            />
+          </div>
+          )}
+
           {/* Remove */}
           <button
             onClick={() => onRemove(placement.id)}
