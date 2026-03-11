@@ -732,8 +732,8 @@ export function Layout({ hass }: LayoutProps) {
             gap: 8,
           }}
         >
-          {/* Top-left: Hamburger (mobile) + Floor switcher */}
-          <div style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 1, minWidth: 0 }}>
+          {/* Top-left: Hamburger (mobile only) */}
+          <div style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0 }}>
           {isMobile && (
             <button
               onClick={(e) => {
@@ -754,46 +754,6 @@ export function Layout({ hass }: LayoutProps) {
               </svg>
             </button>
           )}
-          <div
-            style={{
-              display: "flex",
-              gap: 2,
-              padding: 3,
-              borderRadius: 14,
-              pointerEvents: "auto",
-              flexShrink: 1,
-              minWidth: 0,
-              overflow: "auto",
-              ...glass(isDark),
-            }}
-          >
-            {store.floors.map((floor) => {
-              const isActive = floor.id === currentFloorId;
-              return (
-                <button
-                  key={floor.id}
-                  onClick={() => setCurrentFloorId(floor.id)}
-                  style={{
-                    padding: "7px 14px",
-                    borderRadius: 11,
-                    border: "none",
-                    outline: "none",
-                    fontSize: 13,
-                    fontWeight: isActive ? 600 : 400,
-                    fontFamily: "inherit",
-                    backgroundColor: isActive ? BRAND : "transparent",
-                    color: isActive ? "#fff" : isDark ? "#e1e1e1" : "#212121",
-                    cursor: "pointer",
-                    whiteSpace: "nowrap",
-                    transition: "all 0.2s",
-                    flexShrink: 0,
-                  }}
-                >
-                  {floor.name}
-                </button>
-              );
-            })}
-          </div>
           </div>
 
           {/* Top-right: Quick Access + Settings + Edit/Done */}
@@ -1190,6 +1150,51 @@ export function Layout({ hass }: LayoutProps) {
               &minus;
             </button>
           </div>
+        </div>
+
+        {/* ── Bottom-center: Floor switcher ── */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: 12,
+            left: "50%",
+            transform: "translateX(-50%)",
+            display: "flex",
+            gap: 2,
+            padding: 3,
+            borderRadius: 14,
+            pointerEvents: "auto",
+            overflow: "auto",
+            maxWidth: "calc(100% - 120px)",
+            ...glass(isDark),
+          }}
+        >
+          {store.floors.map((floor) => {
+            const isActive = floor.id === currentFloorId;
+            return (
+              <button
+                key={floor.id}
+                onClick={() => setCurrentFloorId(floor.id)}
+                style={{
+                  padding: "7px 14px",
+                  borderRadius: 11,
+                  border: "none",
+                  outline: "none",
+                  fontSize: 13,
+                  fontWeight: isActive ? 600 : 400,
+                  fontFamily: "inherit",
+                  backgroundColor: isActive ? BRAND : "transparent",
+                  color: isActive ? "#fff" : isDark ? "#e1e1e1" : "#212121",
+                  cursor: "pointer",
+                  whiteSpace: "nowrap",
+                  transition: "all 0.2s",
+                  flexShrink: 0,
+                }}
+              >
+                {floor.name}
+              </button>
+            );
+          })}
         </div>
 
         {/* ── Bottom-left: Logo ── */}

@@ -25138,68 +25138,24 @@ function BP({ hass: t }) {
                   gap: 8
                 },
                 children: [
-                  /* @__PURE__ */ m.jsxs("div", { style: { display: "flex", gap: 8, alignItems: "center", flexShrink: 1, minWidth: 0 }, children: [
-                    X && /* @__PURE__ */ m.jsx(
-                      "button",
-                      {
-                        onClick: (ne) => {
-                          ne.currentTarget.dispatchEvent(
-                            new CustomEvent("hass-toggle-menu", { bubbles: !0, composed: !0 })
-                          );
-                        },
-                        style: {
-                          ..._i(G),
-                          width: 40,
-                          height: 40,
-                          flexShrink: 0
-                        },
-                        title: "Menu",
-                        children: /* @__PURE__ */ m.jsx("svg", { width: "18", height: "18", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", children: /* @__PURE__ */ m.jsx("path", { d: "M3 6h18M3 12h18M3 18h18" }) })
-                      }
-                    ),
-                    /* @__PURE__ */ m.jsx(
-                      "div",
-                      {
-                        style: {
-                          display: "flex",
-                          gap: 2,
-                          padding: 3,
-                          borderRadius: 14,
-                          pointerEvents: "auto",
-                          flexShrink: 1,
-                          minWidth: 0,
-                          overflow: "auto",
-                          ...lo(G)
-                        },
-                        children: e.floors.map((ne) => {
-                          const me = ne.id === r;
-                          return /* @__PURE__ */ m.jsx(
-                            "button",
-                            {
-                              onClick: () => o(ne.id),
-                              style: {
-                                padding: "7px 14px",
-                                borderRadius: 11,
-                                border: "none",
-                                outline: "none",
-                                fontSize: 13,
-                                fontWeight: me ? 600 : 400,
-                                fontFamily: "inherit",
-                                backgroundColor: me ? it : "transparent",
-                                color: me ? "#fff" : G ? "#e1e1e1" : "#212121",
-                                cursor: "pointer",
-                                whiteSpace: "nowrap",
-                                transition: "all 0.2s",
-                                flexShrink: 0
-                              },
-                              children: ne.name
-                            },
-                            ne.id
-                          );
-                        })
-                      }
-                    )
-                  ] }),
+                  /* @__PURE__ */ m.jsx("div", { style: { display: "flex", gap: 8, alignItems: "center", flexShrink: 0 }, children: X && /* @__PURE__ */ m.jsx(
+                    "button",
+                    {
+                      onClick: (ne) => {
+                        ne.currentTarget.dispatchEvent(
+                          new CustomEvent("hass-toggle-menu", { bubbles: !0, composed: !0 })
+                        );
+                      },
+                      style: {
+                        ..._i(G),
+                        width: 40,
+                        height: 40,
+                        flexShrink: 0
+                      },
+                      title: "Menu",
+                      children: /* @__PURE__ */ m.jsx("svg", { width: "18", height: "18", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", children: /* @__PURE__ */ m.jsx("path", { d: "M3 6h18M3 12h18M3 18h18" }) })
+                    }
+                  ) }),
                   /* @__PURE__ */ m.jsxs("div", { style: { display: "flex", gap: 6, flexShrink: 0 }, children: [
                     re === "view" && /* @__PURE__ */ m.jsx(
                       "button",
@@ -25643,6 +25599,51 @@ function BP({ hass: t }) {
                     }
                   )
                 ]
+              }
+            ),
+            /* @__PURE__ */ m.jsx(
+              "div",
+              {
+                style: {
+                  position: "absolute",
+                  bottom: 12,
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  display: "flex",
+                  gap: 2,
+                  padding: 3,
+                  borderRadius: 14,
+                  pointerEvents: "auto",
+                  overflow: "auto",
+                  maxWidth: "calc(100% - 120px)",
+                  ...lo(G)
+                },
+                children: e.floors.map((ne) => {
+                  const me = ne.id === r;
+                  return /* @__PURE__ */ m.jsx(
+                    "button",
+                    {
+                      onClick: () => o(ne.id),
+                      style: {
+                        padding: "7px 14px",
+                        borderRadius: 11,
+                        border: "none",
+                        outline: "none",
+                        fontSize: 13,
+                        fontWeight: me ? 600 : 400,
+                        fontFamily: "inherit",
+                        backgroundColor: me ? it : "transparent",
+                        color: me ? "#fff" : G ? "#e1e1e1" : "#212121",
+                        cursor: "pointer",
+                        whiteSpace: "nowrap",
+                        transition: "all 0.2s",
+                        flexShrink: 0
+                      },
+                      children: ne.name
+                    },
+                    ne.id
+                  );
+                })
               }
             ),
             /* @__PURE__ */ m.jsxs(
