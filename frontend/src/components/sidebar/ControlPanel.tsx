@@ -110,7 +110,7 @@ export function ControlPanel({
 
   // Close button wrapper
   const wrap = (children: ReactNode) => (
-    <div style={{ position: "relative" }}>
+    <div style={{ position: "relative", display: "flex", flexDirection: "column" as const, flex: 1, minHeight: 0 }}>
       {onClose && (
         <button
           onClick={onClose}

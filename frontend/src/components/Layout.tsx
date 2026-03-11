@@ -8,13 +8,14 @@ import { useHomeLayout } from "../hooks/useHomeLayout";
 import { useCanvasTools } from "../hooks/useCanvasTools";
 import { useTheme } from "../hooks/useTheme";
 import { ThemeProvider, BRAND } from "../theme";
-import type { HomeAssistant, AppMode, GlobalSettings, FloorBackground, CanvasTool, EntityPlacement, FurniturePlacement, FurnitureType } from "../types";
+import type { HomeAssistant, AppMode, GlobalSettings, FloorBackground, CanvasTool, EntityPlacement, FurniturePlacement, FurnitureType, DeviceType } from "../types";
 import type { HomeLayoutCanvasHandle } from "./canvas/HomeLayoutCanvas";
 
 import logoSvg from "../../public/logo.svg?raw";
 const logoUrl = `data:image/svg+xml,${encodeURIComponent(logoSvg)}`;
 
 const DESKTOP_BREAKPOINT = 768;
+const TABLET_BREAKPOINT = 1024;
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(
@@ -27,6 +28,15 @@ function useIsMobile() {
     return () => mq.removeEventListener("change", handler);
   }, []);
   return isMobile;
+}
+
+/** Detect device type once at mount (used for initial viewport preset, not responsive layout) */
+function getDeviceType(): DeviceType {
+  if (typeof window === "undefined") return "desktop";
+  const w = window.innerWidth;
+  if (w < DESKTOP_BREAKPOINT) return "mobile";
+  if (w < TABLET_BREAKPOINT) return "tablet";
+  return "desktop";
 }
 
 interface LayoutProps {
@@ -93,6 +103,8 @@ export function Layout({ hass }: LayoutProps) {
   } = useHomeLayout(hass);
 
   const isMobile = useIsMobile();
+  const [deviceType] = useState(getDeviceType);
+  const deviceViewportPreset = store.settings.device_viewports?.[deviceType] ?? null;
   const { activeTool, selectTool } = useCanvasTools();
   const { isDark, preference, setTheme } = useTheme(store.settings.theme);
   const [mode, setMode] = useState<AppMode>("view");
@@ -701,6 +713,7 @@ export function Layout({ hass }: LayoutProps) {
           domainIconSizes={store.settings.domain_icon_sizes}
           draggingEntityId={draggingEntityId}
           dragClientPos={dragClientPos}
+          deviceViewportPreset={deviceViewportPreset}
         />
       </div>
 

@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
-import type { GlobalSettings, FloorBackground, FloorBackgroundType, FurnitureType, SerializedIconRef } from "../../types";
+import type { GlobalSettings, FloorBackground, FloorBackgroundType, FurnitureType, SerializedIconRef, DeviceType, DeviceViewportPreset } from "../../types";
 import type { ThemeColors, IconData } from "../../theme/types";
 import { themePresets, iconPacks, DomIcon, BRAND } from "../../theme";
 import { resolveIcon } from "../../theme/resolveIcon";
@@ -286,18 +286,18 @@ function IconPicker({
   return (
     <div
       style={{
-        position: "absolute",
-        inset: 0,
-        zIndex: 20,
-        backgroundColor: isDark ? "#1e1e1e" : "#fff",
         display: "flex",
         flexDirection: "column",
+        flex: 1,
+        minHeight: 0,
+        overflow: "hidden",
+        backgroundColor: isDark ? "#1e1e1e" : "#fff",
       }}
     >
       {/* Header */}
       <div
         className="flex items-center gap-2 px-3 py-2"
-        style={{ borderBottom: `1px solid ${isDark ? "#333" : "#e0e0e0"}` }}
+        style={{ borderBottom: `1px solid ${isDark ? "#333" : "#e0e0e0"}`, flexShrink: 0 }}
       >
         <button
           onClick={onClose}
@@ -318,7 +318,7 @@ function IconPicker({
       </div>
 
       {/* Search */}
-      <div className="px-3 py-2">
+      <div className="px-3 py-2" style={{ flexShrink: 0 }}>
         <input
           ref={inputRef}
           type="text"
@@ -525,6 +525,180 @@ function ColorRow({
   );
 }
 
+/* ─── Device Viewport Settings ─── */
+
+const DEVICE_TYPES: { key: DeviceType; label: string; icon: string }[] = [
+  { key: "mobile", label: "Mobile", icon: "M7 2h10a2 2 0 012 2v16a2 2 0 01-2 2H7a2 2 0 01-2-2V4a2 2 0 012-2zm5 18h.01" },
+  { key: "tablet", label: "Tablet", icon: "M6 2h12a2 2 0 012 2v16a2 2 0 01-2 2H6a2 2 0 01-2-2V4a2 2 0 012-2zm6 18h.01" },
+  { key: "desktop", label: "Desktop", icon: "M3 4h18a1 1 0 011 1v10a1 1 0 01-1 1H3a1 1 0 01-1-1V5a1 1 0 011-1zm5 16h8m-4-4v4" },
+];
+
+const ROTATION_OPTIONS: { value: 0 | 90 | 180 | 270; label: string }[] = [
+  { value: 0, label: "0°" },
+  { value: 90, label: "90°" },
+  { value: 180, label: "180°" },
+  { value: 270, label: "270°" },
+];
+
+function DeviceViewportSettings({
+  settings,
+  onUpdateSettings,
+  isDark,
+}: {
+  settings: GlobalSettings;
+  onUpdateSettings: (updates: Partial<GlobalSettings>) => void;
+  isDark: boolean;
+}) {
+  const [expandedDevice, setExpandedDevice] = useState<DeviceType | null>(null);
+
+  const getPresetForDevice = (device: DeviceType): DeviceViewportPreset => {
+    return settings.device_viewports?.[device] ?? { default_zoom: 1, default_rotation: 0 };
+  };
+
+  const updateDevicePreset = (device: DeviceType, updates: Partial<DeviceViewportPreset>) => {
+    const current = settings.device_viewports ?? {};
+    const existing = current[device] ?? { default_zoom: 1, default_rotation: 0 };
+    onUpdateSettings({
+      device_viewports: {
+        ...current,
+        [device]: { ...existing, ...updates },
+      },
+    });
+  };
+
+  const resetDevice = (device: DeviceType) => {
+    if (!settings.device_viewports) return;
+    const next = { ...settings.device_viewports };
+    delete next[device];
+    onUpdateSettings({
+      device_viewports: Object.keys(next).length > 0 ? next : undefined,
+    });
+  };
+
+  const rowBg = isDark ? "#2a2a2a" : "#f5f5f5";
+
+  return (
+    <div>
+      <label className="block text-xs mb-1.5" style={{ color: "var(--fp-text-secondary)" }}>
+        Default Viewport per Device
+      </label>
+      <p className="text-xs mb-2" style={{ color: "var(--fp-text-secondary)", opacity: 0.7 }}>
+        Set the initial zoom and rotation when opening on each device type. Takes effect on next load.
+      </p>
+      <div className="space-y-1">
+        {DEVICE_TYPES.map(({ key, label, icon }) => {
+          const preset = getPresetForDevice(key);
+          const isOverridden = !!settings.device_viewports?.[key];
+          const isExpanded = expandedDevice === key;
+
+          return (
+            <div key={key}>
+              <div
+                className="flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer"
+                style={{ backgroundColor: rowBg }}
+                onClick={() => setExpandedDevice(isExpanded ? null : key)}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d={icon} />
+                </svg>
+                <span className="text-xs flex-1">{label}</span>
+                {isOverridden && (
+                  <span className="text-xs tabular-nums" style={{ color: "var(--fp-text-secondary)" }}>
+                    {Math.round(preset.default_zoom * 100)}% · {preset.default_rotation}°
+                  </span>
+                )}
+                {isOverridden && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); resetDevice(key); }}
+                    className="text-xs px-1.5 py-0.5 rounded"
+                    style={{
+                      backgroundColor: isDark ? "#444" : "#ddd",
+                      fontSize: 10,
+                      border: "none",
+                      cursor: "pointer",
+                      color: "var(--fp-text)",
+                    }}
+                  >
+                    Reset
+                  </button>
+                )}
+                <svg
+                  width="10" height="10" viewBox="0 0 10 10" fill="none"
+                  stroke="currentColor" strokeWidth="1.5"
+                  style={{
+                    transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)",
+                    transition: "transform 0.15s",
+                    color: "var(--fp-text-secondary)",
+                  }}
+                >
+                  <path d="M2 3.5l3 3 3-3" />
+                </svg>
+              </div>
+
+              {isExpanded && (
+                <div
+                  className="px-3 py-2.5 rounded-b space-y-3"
+                  style={{ backgroundColor: isDark ? "#252525" : "#f0f0f0" }}
+                >
+                  {/* Zoom slider */}
+                  <div>
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="text-xs" style={{ color: "var(--fp-text-secondary)" }}>
+                        Default Zoom
+                      </label>
+                      <span className="text-xs font-medium tabular-nums">
+                        {Math.round(preset.default_zoom * 100)}%
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min={10}
+                      max={300}
+                      value={Math.round(preset.default_zoom * 100)}
+                      onChange={(e) => updateDevicePreset(key, { default_zoom: Number(e.target.value) / 100 })}
+                      className="w-full"
+                      style={{ accentColor: BRAND }}
+                    />
+                    <div className="flex justify-between text-xs" style={{ color: "var(--fp-text-secondary)", fontSize: 9 }}>
+                      <span>10%</span>
+                      <span>100%</span>
+                      <span>300%</span>
+                    </div>
+                  </div>
+
+                  {/* Rotation */}
+                  <div>
+                    <label className="block text-xs mb-1" style={{ color: "var(--fp-text-secondary)" }}>
+                      Default Rotation
+                    </label>
+                    <div className="flex gap-1">
+                      {ROTATION_OPTIONS.map((opt) => (
+                        <button
+                          key={opt.value}
+                          onClick={() => updateDevicePreset(key, { default_rotation: opt.value })}
+                          className="flex-1 py-2 rounded-lg text-xs font-medium"
+                          style={{
+                            backgroundColor: preset.default_rotation === opt.value ? BRAND : isDark ? "#333" : "#e8e8e8",
+                            color: preset.default_rotation === opt.value ? "#fff" : "var(--fp-text)",
+                            border: "none",
+                            cursor: "pointer",
+                          }}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 /* ─── Main Component ─── */
 
 export function AppearanceSettings({
@@ -608,14 +782,12 @@ export function AppearanceSettings({
   /* ─── Icon picker overlay ─── */
   if (pickerTarget) {
     return (
-      <div style={{ position: "relative", height: "100%", minHeight: 400 }}>
-        <IconPicker
-          target={pickerTarget}
-          isDark={isDark}
-          onSelect={handleIconPick}
-          onClose={() => setPickerTarget(null)}
-        />
-      </div>
+      <IconPicker
+        target={pickerTarget}
+        isDark={isDark}
+        onSelect={handleIconPick}
+        onClose={() => setPickerTarget(null)}
+      />
     );
   }
 
@@ -702,6 +874,13 @@ export function AppearanceSettings({
           ))}
         </div>
       </div>
+
+      {/* ─── Device Viewport Defaults ─── */}
+      <DeviceViewportSettings
+        settings={settings}
+        onUpdateSettings={onUpdateSettings}
+        isDark={isDark}
+      />
 
       {/* ─── Floor Background ─── */}
       {onUpdateFloorBackground && (() => {

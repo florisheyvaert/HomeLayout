@@ -6,7 +6,7 @@ import { RoomLayer } from "./RoomLayer";
 import { EntityLayer } from "./EntityLayer";
 import { FurnitureLayer } from "./FurnitureLayer";
 import { useThemeConfig, DomIcon, BRAND } from "../../theme";
-import type { FloorConfig, FloorBackground, Point, CanvasTool, AppMode, Room, HomeAssistant, FurniturePlacement } from "../../types";
+import type { FloorConfig, FloorBackground, Point, CanvasTool, AppMode, Room, HomeAssistant, FurniturePlacement, DeviceViewportPreset } from "../../types";
 import { getPreset } from "../../backgroundPresets";
 
 interface HomeLayoutCanvasProps {
@@ -40,6 +40,8 @@ interface HomeLayoutCanvasProps {
   draggingEntityId?: string | null;
   /** Client-coordinate position of the dragged entity (for preview + drop) */
   dragClientPos?: { x: number; y: number } | null;
+  /** Device-specific viewport defaults (zoom + rotation) */
+  deviceViewportPreset?: DeviceViewportPreset | null;
 }
 
 const ZOOM_STEP = 1.3;
@@ -240,6 +242,7 @@ export const HomeLayoutCanvas = forwardRef<HomeLayoutCanvasHandle, HomeLayoutCan
       domainIconSizes,
       draggingEntityId,
       dragClientPos,
+      deviceViewportPreset,
     },
     ref
   ) {
@@ -250,11 +253,11 @@ export const HomeLayoutCanvas = forwardRef<HomeLayoutCanvasHandle, HomeLayoutCan
     });
     const [stageScale, setStageScale] = useState(() => {
       const vp = readViewportParams();
-      return vp.scale ?? 1;
+      return vp.scale ?? deviceViewportPreset?.default_zoom ?? 1;
     });
     const [stageRotation, setStageRotation] = useState(() => {
       const vp = readViewportParams();
-      return vp.rotation ?? 0;
+      return vp.rotation ?? deviceViewportPreset?.default_rotation ?? 0;
     });
     const [drawingPoints, setDrawingPoints] = useState<Point[]>([]);
     const [shapeStart, setShapeStart] = useState<Point | null>(null);
@@ -307,13 +310,15 @@ export const HomeLayoutCanvas = forwardRef<HomeLayoutCanvasHandle, HomeLayoutCan
       if (!el) return;
       const defaultX = el.clientWidth / 2;
       const defaultY = el.clientHeight / 2;
+      const defaultScale = deviceViewportPreset?.default_zoom ?? 1;
+      const defaultRotation = deviceViewportPreset?.default_rotation ?? 0;
       const isDefault =
-        stageRotation === 0 &&
-        Math.abs(stageScale - 1) < 0.01 &&
+        stageRotation === defaultRotation &&
+        Math.abs(stageScale - defaultScale) < 0.01 &&
         Math.abs(stagePos.x - defaultX) < 2 &&
         Math.abs(stagePos.y - defaultY) < 2;
       onDefaultViewChange(isDefault);
-    }, [stagePos, stageScale, stageRotation, onDefaultViewChange]);
+    }, [stagePos, stageScale, stageRotation, onDefaultViewChange, deviceViewportPreset]);
 
     // Debounced write of viewport state to URL query params
     const queryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -363,10 +368,10 @@ export const HomeLayoutCanvas = forwardRef<HomeLayoutCanvasHandle, HomeLayoutCan
       const el = containerRef.current;
       const cx = el ? el.clientWidth / 2 : 400;
       const cy = el ? el.clientHeight / 2 : 300;
-      setStageScale(1);
-      setStageRotation(0);
+      setStageScale(deviceViewportPreset?.default_zoom ?? 1);
+      setStageRotation(deviceViewportPreset?.default_rotation ?? 0);
       setStagePos({ x: cx, y: cy });
-    }, []);
+    }, [deviceViewportPreset]);
 
     const handleRotateView = useCallback(() => {
       const el = containerRef.current;

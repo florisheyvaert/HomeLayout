@@ -89,6 +89,13 @@ export interface FavoriteItem {
   order: number;
 }
 
+export type DeviceType = "mobile" | "tablet" | "desktop";
+
+export interface DeviceViewportPreset {
+  default_zoom: number;      // 0.1–5
+  default_rotation: 0 | 90 | 180 | 270;
+}
+
 export interface GlobalSettings {
   default_floor_id: string | null;
   grid_enabled: boolean;
@@ -103,6 +110,7 @@ export interface GlobalSettings {
   domain_colors?: Record<string, string>;
   domain_icons?: Record<string, SerializedIconRef>;
   furniture_icons?: Record<string, SerializedIconRef>;
+  device_viewports?: Partial<Record<DeviceType, DeviceViewportPreset>>;
 }
 
 export interface HaFloor {

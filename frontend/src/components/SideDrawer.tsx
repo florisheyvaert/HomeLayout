@@ -42,6 +42,8 @@ export function SideDrawer({ children, targetSnap, isDark }: SideDrawerProps) {
           overflowY: "auto",
           overflowX: "hidden",
           minHeight: 0,
+          display: "flex",
+          flexDirection: "column" as const,
         }}
       >
         {children}
