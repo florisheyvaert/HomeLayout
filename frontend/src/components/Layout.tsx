@@ -8,11 +8,21 @@ import { useHomeLayout } from "../hooks/useHomeLayout";
 import { useCanvasTools } from "../hooks/useCanvasTools";
 import { useTheme } from "../hooks/useTheme";
 import { ThemeProvider, BRAND } from "../theme";
-import type { HomeAssistant, AppMode, GlobalSettings, FloorBackground, CanvasTool, EntityPlacement, FurniturePlacement, FurnitureType, DeviceType } from "../types";
+import type { HomeAssistant, AppMode, GlobalSettings, FloorBackground, CanvasTool, EntityPlacement, FurniturePlacement, FurnitureType, DeviceType, Room } from "../types";
 import type { HomeLayoutCanvasHandle } from "./canvas/HomeLayoutCanvas";
 
 import logoSvg from "../../public/logo.svg?raw";
 const logoUrl = `data:image/svg+xml,${encodeURIComponent(logoSvg)}`;
+
+function generateId(): string {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
+  });
+}
 
 const DESKTOP_BREAKPOINT = 768;
 const TABLET_BREAKPOINT = 1024;
@@ -351,16 +361,22 @@ export function Layout({ hass }: LayoutProps) {
   );
 
   const handleDeleteSelected = useCallback(() => {
-    if (mode !== "edit") return;
-    for (const id of selectedRoomIds) deleteRoom(id);
-    for (const id of selectedEntityIds) removeEntity(id);
-    for (const id of selectedFurnitureIds) removeFurniture(id);
+    if (mode !== "edit" || !currentFloor) return;
+    const roomSet = new Set(selectedRoomIds);
+    const entitySet = new Set(selectedEntityIds);
+    const furnitureSet = new Set(selectedFurnitureIds);
+    updateFloor(currentFloor.id, {
+      rooms: currentFloor.rooms.filter((r) => !roomSet.has(r.id)),
+      entities: currentFloor.entities.filter((e) => !entitySet.has(e.id)),
+      furniture: (currentFloor.furniture ?? []).filter((f) => !furnitureSet.has(f.id)),
+    });
     setSelectedRoomIds([]);
     setSelectedEntityIds([]);
     setSelectedFurnitureIds([]);
-  }, [mode, selectedRoomIds, selectedEntityIds, selectedFurnitureIds, deleteRoom, removeEntity, removeFurniture]);
+  }, [mode, currentFloor, selectedRoomIds, selectedEntityIds, selectedFurnitureIds, updateFloor]);
 
-  /* ─── Clipboard for copy/paste entities & furniture ─── */
+  /* ─── Clipboard for copy/paste rooms, entities & furniture ─── */
+  const roomClipboardRef = useRef<Room[]>([]);
   const clipboardRef = useRef<EntityPlacement[]>([]);
   const furnitureClipboardRef = useRef<FurniturePlacement[]>([]);
 
@@ -379,8 +395,7 @@ export function Layout({ hass }: LayoutProps) {
         e.preventDefault();
         redo();
       }
-      if (e.key === "Delete" || e.key === "Backspace") {
-        e.preventDefault();
+      if ((e.key === "Delete" || e.key === "Backspace") && mode === "edit") {
         handleDeleteSelected();
       }
       if (e.key === "Escape") {
@@ -400,44 +415,69 @@ export function Layout({ hass }: LayoutProps) {
         setSelectedEntityIds(entityIds);
         setSelectedFurnitureIds(furnitureIds);
       }
-      // Copy selected entities and furniture
+      // Copy selected rooms, entities and furniture
       if ((e.ctrlKey || e.metaKey) && e.key === "c" && mode === "edit") {
+        const rooms = currentFloor?.rooms ?? [];
+        const selectedRms = rooms.filter((r) => selectedRoomIds.includes(r.id));
+        roomClipboardRef.current = selectedRms;
+
         const entities = currentFloor?.entities ?? [];
         const selected = entities.filter((ent) => selectedEntityIds.includes(ent.id));
-        if (selected.length > 0) {
-          clipboardRef.current = selected;
-        }
+        clipboardRef.current = selected;
+
         const furniture = currentFloor?.furniture ?? [];
         const selectedFurn = furniture.filter((f) => selectedFurnitureIds.includes(f.id));
-        if (selectedFurn.length > 0) {
-          furnitureClipboardRef.current = selectedFurn;
-        }
+        furnitureClipboardRef.current = selectedFurn;
       }
-      // Paste copied entities and furniture (offset by 20px)
-      if ((e.ctrlKey || e.metaKey) && e.key === "v" && mode === "edit") {
+      // Paste copied rooms, entities and furniture (offset by 20px)
+      if ((e.ctrlKey || e.metaKey) && e.key === "v" && mode === "edit" && currentFloor) {
         e.preventDefault();
+        const PASTE_OFFSET = 20;
+
+        // Paste rooms
+        const newRoomIds: string[] = [];
+        const newRooms: Room[] = [];
+        for (const src of roomClipboardRef.current) {
+          const newRoom: Room = {
+            ...src,
+            id: generateId(),
+            name: `${src.name} (copy)`,
+            ha_area_id: null,
+            points: src.points.map((p) => ({ x: p.x + PASTE_OFFSET, y: p.y + PASTE_OFFSET })),
+          };
+          newRooms.push(newRoom);
+          newRoomIds.push(newRoom.id);
+        }
+        if (newRooms.length > 0) {
+          updateFloor(currentFloor.id, {
+            rooms: [...currentFloor.rooms, ...newRooms],
+          });
+        }
+
+        // Paste entities
         const newEntityIds: string[] = [];
         for (const src of clipboardRef.current) {
-          const placement = addEntity(src.entity_id, src.x + 20, src.y + 20);
+          const placement = addEntity(src.entity_id, src.x + PASTE_OFFSET, src.y + PASTE_OFFSET);
           if (placement) newEntityIds.push(placement.id);
         }
+
+        // Paste furniture
         const newFurnitureIds: string[] = [];
         for (const src of furnitureClipboardRef.current) {
-          const placement = addFurniture(src.type, src.x + 20, src.y + 20, {
+          const placement = addFurniture(src.type, src.x + PASTE_OFFSET, src.y + PASTE_OFFSET, {
             width: src.width, height: src.height, rotation: src.rotation,
           }, gridEnabled ? effectiveGridSize : undefined);
           if (placement) newFurnitureIds.push(placement.id);
         }
-        if (newEntityIds.length > 0 || newFurnitureIds.length > 0) {
-          setSelectedEntityIds(newEntityIds);
-          setSelectedFurnitureIds(newFurnitureIds);
-          setSelectedRoomIds([]);
-        }
+
+        setSelectedRoomIds(newRoomIds);
+        setSelectedEntityIds(newEntityIds);
+        setSelectedFurnitureIds(newFurnitureIds);
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [undo, redo, handleDeleteSelected, mode, currentFloor, selectedEntityIds, selectedFurnitureIds, addEntity, addFurniture]);
+  }, [undo, redo, handleDeleteSelected, mode, currentFloor, selectedRoomIds, selectedEntityIds, selectedFurnitureIds, addEntity, addFurniture, updateFloor, gridEnabled, effectiveGridSize]);
 
   const handleToggleMode = useCallback(() => {
     setMode((m) => {
@@ -848,7 +888,15 @@ export function Layout({ hass }: LayoutProps) {
               {/* Draw Shape — with submenu */}
               <div>
                 <button
-                  onClick={() => setShowShapeMenu((s) => !s)}
+                  onClick={() => {
+                    const isDrawing = activeTool === "draw" || activeTool === "draw-rect" || activeTool === "draw-circle" || activeTool === "draw-triangle";
+                    if (isDrawing) {
+                      selectTool("select");
+                      setShowShapeMenu(false);
+                    } else {
+                      setShowShapeMenu((s) => !s);
+                    }
+                  }}
                   title="Draw Shape"
                   style={{
                     width: 44,

@@ -90,7 +90,9 @@ export function EntityBrowser({ hass, isDark, isMobile, onTapPlace, onDragStartE
   };
 
   return (
-    <div className="p-4 space-y-3">
+    <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
+      {/* Fixed header */}
+      <div className="p-4 pb-0 space-y-3" style={{ flexShrink: 0 }}>
       <h3 className="text-sm font-semibold uppercase tracking-wide">
         Entities
       </h3>
@@ -164,11 +166,14 @@ export function EntityBrowser({ hass, isDark, isMobile, onTapPlace, onDragStartE
         })}
       </div>
 
-      {/* Results */}
+      {/* Results count */}
       <div className="text-xs" style={{ color: "var(--fp-text-secondary)" }}>
         {totalCount} entities
       </div>
+      </div>
 
+      {/* Scrollable results */}
+      <div className="flex-1 overflow-y-auto px-4 pb-4" style={{ minHeight: 0, scrollbarWidth: "thin" }}>
       <div className="space-y-3">
         {SUPPORTED_DOMAINS.filter((d) => groupedEntities[d]?.length).map(
           (domain) => {
@@ -252,6 +257,7 @@ export function EntityBrowser({ hass, isDark, isMobile, onTapPlace, onDragStartE
             );
           }
         )}
+      </div>
       </div>
     </div>
   );

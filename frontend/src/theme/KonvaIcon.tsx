@@ -14,7 +14,7 @@ interface KonvaIconProps {
  * Render an emoji string to an offscreen canvas and return as HTMLCanvasElement.
  * This avoids platform-specific issues with Konva Text + emoji.
  */
-function renderEmojiToCanvas(emoji: string, fontSize: number): HTMLCanvasElement {
+function renderEmojiToCanvas(emoji: string, fontSize: number, fill?: string): HTMLCanvasElement {
   const canvas = document.createElement("canvas");
   const px = Math.ceil(fontSize * 1.4);
   canvas.width = px;
@@ -23,6 +23,7 @@ function renderEmojiToCanvas(emoji: string, fontSize: number): HTMLCanvasElement
   ctx.font = `${fontSize}px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
+  if (fill) ctx.fillStyle = fill;
   ctx.fillText(emoji, px / 2, px / 2);
   return canvas;
 }
@@ -30,11 +31,11 @@ function renderEmojiToCanvas(emoji: string, fontSize: number): HTMLCanvasElement
 /** Cache for rendered emoji canvases (key: emoji+size) */
 const emojiCache = new Map<string, HTMLCanvasElement>();
 
-function getEmojiCanvas(emoji: string, fontSize: number): HTMLCanvasElement {
-  const key = `${emoji}:${fontSize}`;
+function getEmojiCanvas(emoji: string, fontSize: number, fill?: string): HTMLCanvasElement {
+  const key = `${emoji}:${fontSize}:${fill ?? ""}`;
   let cached = emojiCache.get(key);
   if (!cached) {
-    cached = renderEmojiToCanvas(emoji, fontSize);
+    cached = renderEmojiToCanvas(emoji, fontSize, fill);
     emojiCache.set(key, cached);
   }
   return cached;
@@ -48,7 +49,7 @@ function getEmojiCanvas(emoji: string, fontSize: number): HTMLCanvasElement {
 export function KonvaIcon({ icon, size, fill, opacity = 1, x = 0, y = 0 }: KonvaIconProps) {
   if (icon.type === "emoji") {
     const fontSize = Math.round(size * 0.55);
-    const emojiCanvas = getEmojiCanvas(icon.value, fontSize);
+    const emojiCanvas = getEmojiCanvas(icon.value, fontSize, fill);
     const imgSize = emojiCanvas.width;
 
     return (

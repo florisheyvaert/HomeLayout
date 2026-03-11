@@ -177,6 +177,7 @@ export function ControlPanel({
           floor={floor}
           selectedRoomIds={selectedRoomIds}
           selectedEntityIds={selectedEntityIds}
+          selectedFurnitureIds={selectedFurnitureIds}
           hass={hass}
           onDeleteSelected={onDeleteSelected}
           isDark={isDark}
@@ -239,6 +240,7 @@ export function ControlPanel({
         floor={floor}
         selectedRoomIds={selectedRoomIds}
         selectedEntityIds={selectedEntityIds}
+        selectedFurnitureIds={selectedFurnitureIds}
         hass={hass}
         onDeleteSelected={onDeleteSelected}
         isDark={isDark}

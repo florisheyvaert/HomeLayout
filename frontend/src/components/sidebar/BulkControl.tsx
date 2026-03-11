@@ -5,6 +5,7 @@ interface BulkControlProps {
   floor: FloorConfig;
   selectedRoomIds: string[];
   selectedEntityIds: string[];
+  selectedFurnitureIds?: string[];
   hass: HomeAssistant;
   onDeleteSelected: () => void;
   isDark: boolean;
@@ -23,6 +24,7 @@ export function BulkControl({
   floor,
   selectedRoomIds,
   selectedEntityIds,
+  selectedFurnitureIds = [],
   hass,
   onDeleteSelected,
   isDark,
@@ -31,6 +33,7 @@ export function BulkControl({
   const { colors, getDomainColor } = useThemeConfig();
   const selectedRooms = floor.rooms.filter((r) => selectedRoomIds.includes(r.id));
   const selectedPlacements = floor.entities.filter((e) => selectedEntityIds.includes(e.id));
+  const selectedFurnitureCount = selectedFurnitureIds.length;
   // Deduplicate by entity_id (multiple placements of same entity count as one)
   const seenEntityIds = new Set<string>();
   const uniqueEntities: EntityPlacement[] = [];
@@ -40,7 +43,7 @@ export function BulkControl({
       uniqueEntities.push(p);
     }
   }
-  const totalCount = selectedRooms.length + uniqueEntities.length;
+  const totalCount = selectedRooms.length + uniqueEntities.length + selectedFurnitureCount;
 
   // Group unique entities by domain
   const domainGroups: Record<string, EntityPlacement[]> = {};

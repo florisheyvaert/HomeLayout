@@ -242,6 +242,18 @@ export function EntityMarker({
         }}
       />
 
+      {/* Active glow */}
+      {isActive && !isDragging && (
+        <Circle
+          x={0}
+          y={0}
+          radius={size * 0.38}
+          fill={iconFill}
+          opacity={0.15}
+          listening={false}
+        />
+      )}
+
       {/* Drop shadow while dragging */}
       {isDragging && (
         <Circle
@@ -252,7 +264,6 @@ export function EntityMarker({
           listening={false}
         />
       )}
-
 
       {/* Selection ring */}
       {isSelected && !isDragging && (

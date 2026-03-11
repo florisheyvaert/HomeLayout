@@ -804,11 +804,11 @@ export function AppearanceSettings({
   ) => (
     <div
       key={key}
-      className="flex items-center gap-2 px-2 py-1.5 rounded"
+      className="flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer"
       style={{ backgroundColor: rowBg }}
+      onClick={onPick}
     >
-      <button
-        onClick={onPick}
+      <div
         style={{
           background: "none",
           border: `1.5px solid ${isDark ? "#555" : "#ccc"}`,
@@ -818,17 +818,15 @@ export function AppearanceSettings({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          cursor: "pointer",
           flexShrink: 0,
         }}
-        title="Change icon"
       >
         <DomIcon icon={icon} size={18} />
-      </button>
+      </div>
       <span className="text-xs flex-1">{label}</span>
       {isOverridden && (
         <button
-          onClick={onReset}
+          onClick={(e) => { e.stopPropagation(); onReset(); }}
           className="text-xs px-1.5 py-0.5 rounded"
           style={{
             backgroundColor: isDark ? "#444" : "#ddd",
