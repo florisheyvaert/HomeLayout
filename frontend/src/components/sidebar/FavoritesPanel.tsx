@@ -18,7 +18,7 @@ export function FavoritesPanel({ favorites, hass, isDark, onRemoveFavorite, onSh
   return (
     <div style={{ padding: 16 }}>
       {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, paddingRight: 36 }}>
         <h3 style={{ fontSize: 13, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--fp-text)", margin: 0 }}>
           Quick Access
         </h3>

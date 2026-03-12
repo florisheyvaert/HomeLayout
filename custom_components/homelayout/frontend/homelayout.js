@@ -23680,7 +23680,7 @@ function $5({ onRemove: t }) {
 function kP({ favorites: t, hass: e, isDark: n, onRemoveFavorite: r, onShowEditor: o }) {
   const [a, l] = z.useState(!1), u = [...t].sort((d, p) => d.order - p.order);
   return /* @__PURE__ */ m.jsxs("div", { style: { padding: 16 }, children: [
-    /* @__PURE__ */ m.jsxs("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }, children: [
+    /* @__PURE__ */ m.jsxs("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, paddingRight: 36 }, children: [
       /* @__PURE__ */ m.jsx("h3", { style: { fontSize: 13, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--fp-text)", margin: 0 }, children: "Quick Access" }),
       /* @__PURE__ */ m.jsxs("div", { style: { display: "flex", gap: 4 }, children: [
         /* @__PURE__ */ m.jsx(
