@@ -1167,7 +1167,7 @@ export function Layout({ hass }: LayoutProps) {
           style={{
             position: "absolute",
             right: !isMobile && panelHasContent ? 388 : 12,
-            bottom: isMobile ? 100 : 12,
+            bottom: 12,
             display: "flex",
             flexDirection: "column",
             gap: 8,
@@ -1343,17 +1343,6 @@ export function Layout({ hass }: LayoutProps) {
             alt="HomeLayout"
             style={{ height: 32, width: "auto" }}
           />
-          <span
-            style={{
-              fontSize: 8,
-              fontWeight: 600,
-              letterSpacing: 1.5,
-              color: isDark ? "#555" : "#bbb",
-              textTransform: "uppercase",
-            }}
-          >
-            HomeLayout
-          </span>
         </a>
 
         {/* ── Panel: bottom sheet on mobile, side drawer on desktop ── */}

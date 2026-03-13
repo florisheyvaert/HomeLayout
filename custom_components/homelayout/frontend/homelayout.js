@@ -26165,7 +26165,7 @@ function lE({ hass: t }) {
                 style: {
                   position: "absolute",
                   right: !$ && kr ? 388 : 12,
-                  bottom: $ ? 100 : 12,
+                  bottom: 12,
                   display: "flex",
                   flexDirection: "column",
                   gap: 8,
@@ -26339,7 +26339,7 @@ function lE({ hass: t }) {
               }
             ),
             ce === "edit" && /* @__PURE__ */ h.jsx(aE, { scale: As, isDark: I }),
-            /* @__PURE__ */ h.jsxs(
+            /* @__PURE__ */ h.jsx(
               "a",
               {
                 href: "https://github.com/florisheyvaert/HomeLayout",
@@ -26357,29 +26357,14 @@ function lE({ hass: t }) {
                   textDecoration: "none",
                   gap: 2
                 },
-                children: [
-                  /* @__PURE__ */ h.jsx(
-                    "img",
-                    {
-                      src: tE,
-                      alt: "HomeLayout",
-                      style: { height: 32, width: "auto" }
-                    }
-                  ),
-                  /* @__PURE__ */ h.jsx(
-                    "span",
-                    {
-                      style: {
-                        fontSize: 8,
-                        fontWeight: 600,
-                        letterSpacing: 1.5,
-                        color: I ? "#555" : "#bbb",
-                        textTransform: "uppercase"
-                      },
-                      children: "HomeLayout"
-                    }
-                  )
-                ]
+                children: /* @__PURE__ */ h.jsx(
+                  "img",
+                  {
+                    src: tE,
+                    alt: "HomeLayout",
+                    style: { height: 32, width: "auto" }
+                  }
+                )
               }
             ),
             $ ? /* @__PURE__ */ h.jsx(JA, { targetSnap: It, isDark: I, children: kr && /* @__PURE__ */ h.jsx(
