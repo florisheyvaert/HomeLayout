@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect, useRef } from "react";
+import { useCallback, useState, useEffect, useRef, useMemo } from "react";
 import { HomeLayoutCanvas } from "./canvas/HomeLayoutCanvas";
 import { BottomSheet } from "./BottomSheet";
 import { SideDrawer } from "./SideDrawer";
@@ -78,6 +78,65 @@ const fabBase = (isDark: boolean): React.CSSProperties => ({
   ...glass(isDark),
 });
 
+/** Pick a "nice" real-world distance for the bar, compute its pixel width */
+function pickScaleStep(scale: number) {
+  // 1 canvas unit = 1 cm → 100 canvas units = 1 m
+  // screen px per meter = scale * 100
+  const pxPerMeter = scale * 100;
+
+  // Nice meter steps: 0.1m, 0.2m, 0.5m, 1m, 2m, 5m, 10m, 20m, 50m
+  const steps = [0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50];
+  // Target bar width: 60–200px on screen
+  for (const m of steps) {
+    const px = m * pxPerMeter;
+    if (px >= 60 && px <= 200) {
+      const label = m < 1 ? `${Math.round(m * 100)}cm` : `${m}m`;
+      return { widthPx: px, label };
+    }
+  }
+  const fallbackM = steps[steps.length - 1];
+  return { widthPx: Math.min(200, fallbackM * pxPerMeter), label: `${fallbackM}m` };
+}
+
+function ScaleBar({ scale, isDark }: { scale: number; isDark: boolean }) {
+  const { widthPx, label } = pickScaleStep(scale);
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        bottom: 56,
+        left: 12,
+        pointerEvents: "none",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "flex-start",
+        gap: 2,
+      }}
+    >
+      <span
+        style={{
+          fontSize: 9,
+          fontWeight: 600,
+          color: isDark ? "#888" : "#999",
+          letterSpacing: 0.5,
+        }}
+      >
+        {label}
+      </span>
+      <div
+        style={{
+          width: widthPx,
+          height: 4,
+          borderRadius: 2,
+          backgroundColor: isDark ? "#555" : "#bbb",
+          boxShadow: "0 1px 3px rgba(0,0,0,0.15)",
+        }}
+      />
+    </div>
+  );
+}
+
 export function Layout({ hass }: LayoutProps) {
   const {
     store,
@@ -115,6 +174,16 @@ export function Layout({ hass }: LayoutProps) {
   const isMobile = useIsMobile();
   const [deviceType] = useState(getDeviceType);
   const deviceViewportPreset = store.settings.device_viewports?.[deviceType] ?? null;
+  // Ghost rooms: show rooms from the floor directly below (by order) as reference
+  const ghostRooms = useMemo(() => {
+    if (!currentFloor || store.floors.length < 2) return null;
+    const sorted = [...store.floors].sort((a, b) => a.order - b.order);
+    const currentIdx = sorted.findIndex((f) => f.id === currentFloor.id);
+    // Show the floor below (lower order), or above if we're at the bottom
+    const refFloor = currentIdx > 0 ? sorted[currentIdx - 1] : sorted[currentIdx + 1];
+    return refFloor?.rooms ?? null;
+  }, [currentFloor, store.floors]);
+
   const { activeTool, selectTool } = useCanvasTools();
   const { isDark, preference, setTheme } = useTheme(store.settings.theme);
   const [mode, setMode] = useState<AppMode>("view");
@@ -137,6 +206,7 @@ export function Layout({ hass }: LayoutProps) {
   const [draggingEntityId, setDraggingEntityId] = useState<string | null>(null);
   const [dragClientPos, setDragClientPos] = useState<{ x: number; y: number } | null>(null);
   const canvasRef = useRef<HomeLayoutCanvasHandle>(null);
+  const [canvasScale, setCanvasScale] = useState(1);
 
   /* ─── Selection handlers (unchanged logic) ─── */
   const handleSelectRoom = useCallback((id: string, shiftKey: boolean) => {
@@ -745,6 +815,7 @@ export function Layout({ hass }: LayoutProps) {
           onUpdateFurniture={updateFurniture}
           onDropFurniture={handleDropFurniture}
           onDefaultViewChange={setIsDefaultView}
+          onScaleChange={setCanvasScale}
           hass={hass}
           gridSize={gridEnabled ? effectiveGridSize : 20}
           gridEnabled={mode === "edit" && gridEnabled}
@@ -754,6 +825,7 @@ export function Layout({ hass }: LayoutProps) {
           draggingEntityId={draggingEntityId}
           dragClientPos={dragClientPos}
           deviceViewportPreset={deviceViewportPreset}
+          ghostRooms={ghostRooms}
         />
       </div>
 
@@ -1244,6 +1316,9 @@ export function Layout({ hass }: LayoutProps) {
             );
           })}
         </div>
+
+        {/* ── Bottom-left: Scale bar (edit mode only) ── */}
+        {mode === "edit" && <ScaleBar scale={canvasScale} isDark={isDark} />}
 
         {/* ── Bottom-left: Logo ── */}
         <a

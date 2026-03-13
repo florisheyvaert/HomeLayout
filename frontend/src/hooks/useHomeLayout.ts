@@ -120,9 +120,11 @@ export function useHomeLayout(hass: HomeAssistant | null) {
       hass.callWS<HaFloor[]>({ type: "config/floor_registry/list" }),
       hass.callWS<HaArea[]>({ type: "config/area_registry/list" }),
       hass.callWS<HaEntityRegistryEntry[]>({ type: "config/entity_registry/list" }).catch(() => []),
-      hass
-        .callWS<HomeLayoutStore>({ type: "homelayout/config/get" })
-        .catch(() => loadFromLocalStorage() ?? DEFAULT_STORE),
+      import.meta.env.DEV
+        ? Promise.resolve(loadFromLocalStorage() ?? DEFAULT_STORE)
+        : hass
+            .callWS<HomeLayoutStore>({ type: "homelayout/config/get" })
+            .catch(() => loadFromLocalStorage() ?? DEFAULT_STORE),
     ]).then(([floors, areas, entityReg, savedStore]) => {
       setHaFloors(floors);
       setHaAreas(areas);
@@ -184,10 +186,12 @@ export function useHomeLayout(hass: HomeAssistant | null) {
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
       saveTimeoutRef.current = setTimeout(() => {
         saveToLocalStorage(newStore);
-        hass?.callWS({
-          type: "homelayout/config/save",
-          config: newStore,
-        }).catch(() => {});
+        if (!import.meta.env.DEV) {
+          hass?.callWS({
+            type: "homelayout/config/save",
+            config: newStore,
+          }).catch(() => {});
+        }
       }, 500);
     },
     [hass]

@@ -346,6 +346,53 @@ export function RoomLayer({
             });
           })}
 
+      {/* Edge length labels — only for single selection in edit mode */}
+      {isEditMode &&
+        singleSelected &&
+        rooms
+          .filter((room) => room.id === singleSelected)
+          .map((room) => {
+            const pts = getRoomPoints(room, dragState, edgeDragState);
+            const n = pts.length;
+            return pts.map((point, idx) => {
+              const next = pts[(idx + 1) % n];
+              const dx = next.x - point.x;
+              const dy = next.y - point.y;
+              const lengthPx = Math.sqrt(dx * dx + dy * dy);
+              const label = `${(lengthPx / 100).toFixed(2)}m`;
+              const midX = (point.x + next.x) / 2;
+              const midY = (point.y + next.y) / 2;
+              // Offset label outward from room center
+              const cx = pts.reduce((s, p) => s + p.x, 0) / n;
+              const cy = pts.reduce((s, p) => s + p.y, 0) / n;
+              // Perpendicular outward direction
+              const edgeLen = Math.max(lengthPx, 0.01);
+              const nx = -(dy / edgeLen);
+              const ny = dx / edgeLen;
+              // Point outward (away from center)
+              const toCenter = (midX - cx) * nx + (midY - cy) * ny;
+              const sign = toCenter >= 0 ? 1 : -1;
+              const offset = 12;
+              const lx = midX + nx * offset * sign;
+              const ly = midY + ny * offset * sign;
+
+              return (
+                <Group key={`len-${room.id}-${idx}`} x={lx} y={ly} rotation={-stageRotation}>
+                  <Text
+                    text={label}
+                    fontSize={9}
+                    fontFamily={fontFamily}
+                    fill={accentColor}
+                    opacity={0.85}
+                    listening={false}
+                    offsetX={label.length * 2.5}
+                    offsetY={5}
+                  />
+                </Group>
+              );
+            });
+          })}
+
       {/* Drawing preview (only in edit mode) */}
       {isEditMode && drawingPoints.length > 0 && (
         <>

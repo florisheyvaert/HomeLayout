@@ -5,6 +5,7 @@ import { GridLayer } from "./GridLayer";
 import { RoomLayer } from "./RoomLayer";
 import { EntityLayer } from "./EntityLayer";
 import { FurnitureLayer } from "./FurnitureLayer";
+import { RoomBadgeLayer } from "./RoomBadgeLayer";
 import { useThemeConfig, DomIcon, BRAND } from "../../theme";
 import type { FloorConfig, FloorBackground, Point, CanvasTool, AppMode, Room, HomeAssistant, FurniturePlacement, DeviceViewportPreset } from "../../types";
 import { getPreset } from "../../backgroundPresets";
@@ -30,6 +31,7 @@ interface HomeLayoutCanvasProps {
   onUpdateFurniture: (id: string, updates: Partial<FurniturePlacement>) => void;
   onDropFurniture: (type: string, x: number, y: number) => void;
   onDefaultViewChange?: (isDefault: boolean) => void;
+  onScaleChange?: (scale: number) => void;
   hass: HomeAssistant;
   gridSize: number;
   gridEnabled: boolean;
@@ -42,6 +44,8 @@ interface HomeLayoutCanvasProps {
   dragClientPos?: { x: number; y: number } | null;
   /** Device-specific viewport defaults (zoom + rotation) */
   deviceViewportPreset?: DeviceViewportPreset | null;
+  /** Rooms from a reference floor to show as ghost overlay in edit mode */
+  ghostRooms?: Room[] | null;
 }
 
 const ZOOM_STEP = 1.3;
@@ -205,6 +209,7 @@ export interface HomeLayoutCanvasHandle {
   resetView: () => void;
   rotateView: () => void;
   rotation: number;
+  scale: number;
   /** Returns the canvas-coordinate point at the center of the viewport */
   getViewportCenter: () => Point;
   /** Convert client coords to snapped canvas coords (for pointer-based entity drop) */
@@ -234,6 +239,7 @@ export const HomeLayoutCanvas = forwardRef<HomeLayoutCanvasHandle, HomeLayoutCan
       onUpdateFurniture,
       onDropFurniture,
       onDefaultViewChange,
+      onScaleChange,
       hass,
       gridSize,
       gridEnabled,
@@ -243,6 +249,7 @@ export const HomeLayoutCanvas = forwardRef<HomeLayoutCanvasHandle, HomeLayoutCan
       draggingEntityId,
       dragClientPos,
       deviceViewportPreset,
+      ghostRooms,
     },
     ref
   ) {
@@ -319,6 +326,11 @@ export const HomeLayoutCanvas = forwardRef<HomeLayoutCanvasHandle, HomeLayoutCan
         Math.abs(stagePos.y - defaultY) < 2;
       onDefaultViewChange(isDefault);
     }, [stagePos, stageScale, stageRotation, onDefaultViewChange, deviceViewportPreset]);
+
+    // Notify parent of scale changes
+    useEffect(() => {
+      onScaleChange?.(stageScale);
+    }, [stageScale, onScaleChange]);
 
     // Debounced write of viewport state to URL query params
     const queryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -414,10 +426,11 @@ export const HomeLayoutCanvas = forwardRef<HomeLayoutCanvasHandle, HomeLayoutCan
         resetView: handleResetView,
         rotateView: handleRotateView,
         rotation: stageRotation,
+        scale: stageScale,
         getViewportCenter,
         clientToCanvas,
       }),
-      [handleZoomIn, handleZoomOut, handleResetView, handleRotateView, stageRotation, getViewportCenter, clientToCanvas]
+      [handleZoomIn, handleZoomOut, handleResetView, handleRotateView, stageRotation, stageScale, getViewportCenter, clientToCanvas]
     );
 
     /* ─── Scroll-wheel zoom (Konva) ─── */
@@ -914,6 +927,26 @@ export const HomeLayoutCanvas = forwardRef<HomeLayoutCanvasHandle, HomeLayoutCan
                   isDark={isDark}
                 />
               </Layer>
+              {/* Ghost floor reference layer (edit mode only) */}
+              {mode === "edit" && ghostRooms && ghostRooms.length > 0 && (
+              <Layer opacity={0.15} listening={false}>
+                {ghostRooms.map((room) => {
+                  const flatPoints = room.points.flatMap((p) => [p.x, p.y]);
+                  return (
+                    <Line
+                      key={room.id}
+                      points={flatPoints}
+                      closed
+                      fill={isDark ? "#ffffff" : "#000000"}
+                      stroke={isDark ? "#ffffff" : "#000000"}
+                      strokeWidth={1}
+                      dash={[6, 4]}
+                      listening={false}
+                    />
+                  );
+                })}
+              </Layer>
+              )}
               <Layer>
                 <RoomLayer
                   rooms={floor?.rooms ?? []}
@@ -933,6 +966,12 @@ export const HomeLayoutCanvas = forwardRef<HomeLayoutCanvasHandle, HomeLayoutCan
                   groupDragOffset={isMultiSelect ? groupDragOffset : null}
                   onGroupDragMove={isMultiSelect ? setGroupDragOffset : undefined}
                   onGroupDragEnd={isMultiSelect ? () => setGroupDragOffset(null) : undefined}
+                />
+                <RoomBadgeLayer
+                  rooms={floor?.rooms ?? []}
+                  hass={hass}
+                  isDark={isDark}
+                  stageRotation={stageRotation}
                 />
               </Layer>
               <Layer>

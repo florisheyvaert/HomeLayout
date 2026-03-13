@@ -52,6 +52,21 @@ export interface FloorConfig {
 export type LabelVertical = "top" | "middle" | "bottom";
 export type LabelHorizontal = "left" | "center" | "right";
 
+export type BadgePosition =
+  | "top-left" | "top-center" | "top-right"
+  | "center-left" | "center" | "center-right"
+  | "bottom-left" | "bottom-center" | "bottom-right";
+
+export interface RoomBadge {
+  id: string;
+  entity_id: string;
+  position: BadgePosition;
+  show_icon: boolean;
+  show_name: boolean;
+  show_attribute?: string;
+  icon_override?: SerializedIconRef;
+}
+
 export interface Room {
   id: string;
   name: string;
@@ -60,6 +75,7 @@ export interface Room {
   label_visible: boolean;
   label_v?: LabelVertical;
   label_h?: LabelHorizontal;
+  badges?: RoomBadge[];
 }
 
 export interface Point {

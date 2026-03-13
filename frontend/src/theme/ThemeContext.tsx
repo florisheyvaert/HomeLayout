@@ -85,7 +85,12 @@ export function ThemeProvider({
       state: string,
       deviceClass?: string,
     ): ResolvedIcon => {
-      // Check domain icon override first
+      // Check device-class-specific override first (e.g. "sensor.temperature")
+      if (deviceClass && domainIcons?.[`${domain}.${deviceClass}`]) {
+        const override = resolveOverriddenIcon(domainIcons[`${domain}.${deviceClass}`], state);
+        if (override) return override;
+      }
+      // Then domain-level override (e.g. "sensor")
       if (domainIcons?.[domain]) {
         const override = resolveOverriddenIcon(domainIcons[domain], state);
         if (override) return override;
