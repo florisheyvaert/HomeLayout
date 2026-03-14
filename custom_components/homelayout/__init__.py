@@ -6,7 +6,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv
 
-from .const import DOMAIN
+from .const import DOMAIN, CONF_SET_DEFAULT
 from .store import HomeLayoutStorage
 from .websocket_api import async_register_commands
 
@@ -15,6 +15,14 @@ CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 PANEL_URL = f"/{DOMAIN}_panel"
 PANEL_FRONTEND_DIR = os.path.join(os.path.dirname(__file__), "frontend")
 
+
+async def _set_default_panel(hass: HomeAssistant, panel_name: str) -> None:
+    """Set the system-wide default panel via the frontend system store."""
+    system_store = await frontend.async_system_store(hass)
+    core_data = system_store.data.get("core") or {}
+    await system_store.async_set_item(
+        "core", {**core_data, "default_panel": panel_name}
+    )
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -40,10 +48,31 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         config={},
     )
 
+    # Set as default dashboard if configured
+    if entry.options.get(CONF_SET_DEFAULT, False):
+        await _set_default_panel(hass, DOMAIN)
+
+    # Listen for options updates
+    entry.async_on_unload(entry.add_update_listener(_options_update_listener))
+
     return True
+
+
+async def _options_update_listener(
+    hass: HomeAssistant, entry: ConfigEntry
+) -> None:
+    """Update default panel when options change."""
+    if entry.options.get(CONF_SET_DEFAULT, False):
+        await _set_default_panel(hass, DOMAIN)
+    else:
+        # Restore HA default (lovelace-home or lovelace)
+        await _set_default_panel(hass, "lovelace")
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     frontend.async_remove_panel(hass, DOMAIN)
+    # Restore default panel if we were the default
+    if entry.options.get(CONF_SET_DEFAULT, False):
+        await _set_default_panel(hass, "lovelace")
     hass.data.pop(DOMAIN, None)
     return True

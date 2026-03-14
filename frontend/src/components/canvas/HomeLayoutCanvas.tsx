@@ -6,8 +6,9 @@ import { RoomLayer } from "./RoomLayer";
 import { EntityLayer } from "./EntityLayer";
 import { FurnitureLayer } from "./FurnitureLayer";
 import { RoomBadgeLayer } from "./RoomBadgeLayer";
+import { SummaryWidget } from "./SummaryWidget";
 import { useThemeConfig, DomIcon, BRAND } from "../../theme";
-import type { FloorConfig, FloorBackground, Point, CanvasTool, AppMode, Room, HomeAssistant, FurniturePlacement, DeviceViewportPreset } from "../../types";
+import type { FloorConfig, FloorBackground, FloorSummaryConfig, Point, CanvasTool, AppMode, Room, HomeAssistant, FurniturePlacement, DeviceViewportPreset } from "../../types";
 import { getPreset } from "../../backgroundPresets";
 
 interface HomeLayoutCanvasProps {
@@ -46,6 +47,9 @@ interface HomeLayoutCanvasProps {
   deviceViewportPreset?: DeviceViewportPreset | null;
   /** Rooms from a reference floor to show as ghost overlay in edit mode */
   ghostRooms?: Room[] | null;
+  /** Summary widget config + callbacks */
+  onUpdateSummary?: (updates: Partial<FloorSummaryConfig>) => void;
+  onSummaryClickDomain?: (domain: string, entityIds: string[]) => void;
 }
 
 const ZOOM_STEP = 1.3;
@@ -250,6 +254,8 @@ export const HomeLayoutCanvas = forwardRef<HomeLayoutCanvasHandle, HomeLayoutCan
       dragClientPos,
       deviceViewportPreset,
       ghostRooms,
+      onUpdateSummary,
+      onSummaryClickDomain,
     },
     ref
   ) {
@@ -963,6 +969,7 @@ export const HomeLayoutCanvas = forwardRef<HomeLayoutCanvasHandle, HomeLayoutCan
                   gridEnabled={gridEnabled}
                   isDark={isDark}
                   stageRotation={stageRotation}
+                  stageScale={stageScale}
                   groupDragOffset={isMultiSelect ? groupDragOffset : null}
                   onGroupDragMove={isMultiSelect ? setGroupDragOffset : undefined}
                   onGroupDragEnd={isMultiSelect ? () => setGroupDragOffset(null) : undefined}
@@ -972,6 +979,7 @@ export const HomeLayoutCanvas = forwardRef<HomeLayoutCanvasHandle, HomeLayoutCan
                   hass={hass}
                   isDark={isDark}
                   stageRotation={stageRotation}
+                  stageScale={stageScale}
                 />
               </Layer>
               <Layer>
@@ -1005,6 +1013,7 @@ export const HomeLayoutCanvas = forwardRef<HomeLayoutCanvasHandle, HomeLayoutCan
                   gridEnabled={gridEnabled}
                   isDark={isDark}
                   stageRotation={stageRotation}
+                  stageScale={stageScale}
                   groupDragOffset={isMultiSelect ? groupDragOffset : null}
                   onGroupDragMove={isMultiSelect ? setGroupDragOffset : undefined}
                   onGroupDragEnd={isMultiSelect ? () => setGroupDragOffset(null) : undefined}
@@ -1012,6 +1021,21 @@ export const HomeLayoutCanvas = forwardRef<HomeLayoutCanvasHandle, HomeLayoutCan
                   domainIconSizes={domainIconSizes}
                 />
               </Layer>
+              {/* Summary widget */}
+              {floor?.summary?.visible !== false && floor && (
+                <Layer>
+                  <SummaryWidget
+                    hass={hass}
+                    isDark={isDark}
+                    isEditMode={mode === "edit"}
+                    stageRotation={stageRotation}
+                    stageScale={stageScale}
+                    config={floor.summary ?? { x: -120, y: -20, visible: true }}
+                    onMove={onUpdateSummary ? (x, y) => onUpdateSummary({ x, y }) : undefined}
+                    onClickDomain={onSummaryClickDomain}
+                  />
+                </Layer>
+              )}
           {/* Origin marker + axes — edit mode only, topmost, non-interactive */}
           {mode === "edit" && (() => {
             // Compute visible canvas bounds for infinite-looking axes

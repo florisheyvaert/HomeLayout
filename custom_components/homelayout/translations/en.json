@@ -6,5 +6,17 @@
         "description": "Install HomeLayout to get an interactive floor plan panel in your sidebar."
       }
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "set_default_dashboard": "Set as default dashboard"
+        },
+        "data_description": {
+          "set_default_dashboard": "Replace the default Overview dashboard with HomeLayout. The original dashboard remains accessible via its URL."
+        }
+      }
+    }
   }
 }

@@ -15,6 +15,7 @@ interface EntityLayerProps {
   gridEnabled: boolean;
   isDark: boolean;
   stageRotation: number;
+  stageScale: number;
   groupDragOffset: Point | null;
   onGroupDragMove?: (offset: Point) => void;
   onGroupDragEnd?: () => void;
@@ -34,6 +35,7 @@ export function EntityLayer({
   gridEnabled,
   isDark,
   stageRotation,
+  stageScale,
   groupDragOffset,
   onGroupDragMove,
   onGroupDragEnd,
@@ -67,6 +69,7 @@ export function EntityLayer({
             gridEnabled={gridEnabled}
             isDark={isDark}
             stageRotation={stageRotation}
+            stageScale={stageScale}
             groupDragOffset={applyOffset}
             onGroupDragMove={isSelected ? onGroupDragMove : undefined}
             onGroupDragEnd={isSelected ? onGroupDragEnd : undefined}

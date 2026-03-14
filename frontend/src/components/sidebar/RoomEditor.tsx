@@ -254,6 +254,16 @@ function BadgesSection({
     onUpdate(room.id, { badges: badges.filter((b) => b.id !== badgeId) });
   };
 
+  const moveBadge = (badgeId: string, direction: -1 | 1) => {
+    const idx = badges.findIndex((b) => b.id === badgeId);
+    if (idx < 0) return;
+    const newIdx = idx + direction;
+    if (newIdx < 0 || newIdx >= badges.length) return;
+    const next = [...badges];
+    [next[idx], next[newIdx]] = [next[newIdx], next[idx]];
+    onUpdate(room.id, { badges: next });
+  };
+
   const addBadge = (entityId: string) => {
     const newBadge: RoomBadge = {
       id: generateId(),
@@ -443,6 +453,44 @@ function BadgesSection({
                       Reset
                     </button>
                   )}
+                  <div className="flex gap-0.5">
+                    <button
+                      onClick={() => moveBadge(badge.id, -1)}
+                      disabled={badges.indexOf(badge) === 0}
+                      title="Move up"
+                      className="rounded"
+                      style={{
+                        padding: "2px 4px",
+                        border: "none",
+                        cursor: badges.indexOf(badge) === 0 ? "default" : "pointer",
+                        opacity: badges.indexOf(badge) === 0 ? 0.25 : 0.6,
+                        background: "none",
+                        color: "var(--fp-text)",
+                      }}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M18 15l-6-6-6 6" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => moveBadge(badge.id, 1)}
+                      disabled={badges.indexOf(badge) === badges.length - 1}
+                      title="Move down"
+                      className="rounded"
+                      style={{
+                        padding: "2px 4px",
+                        border: "none",
+                        cursor: badges.indexOf(badge) === badges.length - 1 ? "default" : "pointer",
+                        opacity: badges.indexOf(badge) === badges.length - 1 ? 0.25 : 0.6,
+                        background: "none",
+                        color: "var(--fp-text)",
+                      }}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M6 9l6 6 6-6" />
+                      </svg>
+                    </button>
+                  </div>
                   <button
                     onClick={() => removeBadge(badge.id)}
                     className="text-xs px-2 py-1 rounded"

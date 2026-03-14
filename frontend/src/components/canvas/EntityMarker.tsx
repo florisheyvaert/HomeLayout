@@ -18,6 +18,7 @@ interface EntityMarkerProps {
   gridEnabled: boolean;
   isDark: boolean;
   stageRotation: number;
+  stageScale: number;
   groupDragOffset: { x: number; y: number } | null;
   onGroupDragMove?: (offset: { x: number; y: number }) => void;
   onGroupDragEnd?: () => void;
@@ -48,6 +49,7 @@ export function EntityMarker({
   gridEnabled,
   isDark,
   stageRotation,
+  stageScale,
   groupDragOffset,
   onGroupDragMove,
   onGroupDragEnd,
@@ -287,8 +289,8 @@ export function EntityMarker({
         />
       )}
 
-      {/* Counter-rotate icon + label so they stay upright */}
-      <Group rotation={-stageRotation}>
+      {/* Counter-rotate + scale-compensate so icons/labels stay readable */}
+      <Group rotation={-stageRotation} scaleX={1 / stageScale} scaleY={1 / stageScale}>
         {(() => {
           const showIcon = placement.show_icon !== false;
           const showName = placement.label_visible;

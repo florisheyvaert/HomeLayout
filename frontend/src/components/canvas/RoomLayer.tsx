@@ -18,6 +18,7 @@ interface RoomLayerProps {
   gridEnabled: boolean;
   isDark: boolean;
   stageRotation: number;
+  stageScale: number;
   groupDragOffset: Point | null;
   onGroupDragMove?: (offset: Point) => void;
   onGroupDragEnd?: () => void;
@@ -117,6 +118,7 @@ export function RoomLayer({
   gridEnabled,
   isDark,
   stageRotation,
+  stageScale,
   groupDragOffset,
   onGroupDragMove,
   onGroupDragEnd,
@@ -211,7 +213,7 @@ export function RoomLayer({
               const anchorX = labelPos.x + estimatedWidth / 2;
               const anchorY = labelPos.y + 7;
               return (
-                <Group x={anchorX} y={anchorY} rotation={-stageRotation}>
+                <Group x={anchorX} y={anchorY} rotation={-stageRotation} scaleX={1 / stageScale} scaleY={1 / stageScale}>
                   <Text
                     x={-estimatedWidth / 2}
                     y={-7}
@@ -377,7 +379,7 @@ export function RoomLayer({
               const ly = midY + ny * offset * sign;
 
               return (
-                <Group key={`len-${room.id}-${idx}`} x={lx} y={ly} rotation={-stageRotation}>
+                <Group key={`len-${room.id}-${idx}`} x={lx} y={ly} rotation={-stageRotation} scaleX={1 / stageScale} scaleY={1 / stageScale}>
                   <Text
                     text={label}
                     fontSize={9}

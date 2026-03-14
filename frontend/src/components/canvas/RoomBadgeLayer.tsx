@@ -10,6 +10,7 @@ interface RoomBadgeLayerProps {
   hass: HomeAssistant;
   isDark: boolean;
   stageRotation: number;
+  stageScale: number;
 }
 
 const BADGE_PADDING = 10;
@@ -76,7 +77,7 @@ function getLocalAnchor(
   return { x, y, alignH, alignV };
 }
 
-export function RoomBadgeLayer({ rooms, hass, isDark, stageRotation }: RoomBadgeLayerProps) {
+export function RoomBadgeLayer({ rooms, hass, isDark, stageRotation, stageScale }: RoomBadgeLayerProps) {
   const { resolveEntityIcon, getDomainColor, fontFamily } = useThemeConfig();
 
   const badgeNodes: React.ReactNode[] = [];
@@ -184,6 +185,8 @@ export function RoomBadgeLayer({ rooms, hass, isDark, stageRotation }: RoomBadge
           x={center.x}
           y={center.y}
           rotation={-stageRotation}
+          scaleX={1 / stageScale}
+          scaleY={1 / stageScale}
           listening={false}
         >
           {badgeData.map((d, idx) => {

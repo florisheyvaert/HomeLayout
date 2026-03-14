@@ -261,6 +261,7 @@ export function Layout({ hass }: LayoutProps) {
     setSelectedEntityIds([]);
     setSelectedFurnitureIds([]);
     setShowAppearance(false);
+    setShowQuickAccess(false);
     if (activeTool === "place" || activeTool === "furniture") {
       selectTool("select");
     }
@@ -828,6 +829,22 @@ export function Layout({ hass }: LayoutProps) {
           dragClientPos={dragClientPos}
           deviceViewportPreset={deviceViewportPreset}
           ghostRooms={ghostRooms}
+          onUpdateSummary={(updates) => {
+            if (!currentFloor) return;
+            const current = currentFloor.summary ?? { x: -120, y: -20, visible: true };
+            updateFloor(currentFloor.id, { summary: { ...current, ...updates } });
+          }}
+          onSummaryClickDomain={(_domain, entityIds) => {
+            // Find placement IDs for these entity_ids
+            const placementIds = (currentFloor?.entities ?? [])
+              .filter((e) => entityIds.includes(e.entity_id))
+              .map((e) => e.id);
+            if (placementIds.length > 0) {
+              setSelectedRoomIds([]);
+              setSelectedFurnitureIds([]);
+              setSelectedEntityIds(placementIds);
+            }
+          }}
         />
       </div>
 
@@ -870,8 +887,23 @@ export function Layout({ hass }: LayoutProps) {
           )}
           </div>
 
-          {/* Top-right: Quick Access + Settings + Edit/Done */}
+          {/* Top-right: Edit/Done + Quick Access */}
           <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+            <button
+              onClick={handleToggleMode}
+              title={mode === "edit" ? "Done" : "Edit"}
+              style={{
+                ...fabBase(isDark),
+                width: 40,
+                height: 40,
+                fontSize: 16,
+                backgroundColor:
+                  mode === "edit" ? BRAND : fabBase(isDark).backgroundColor,
+                color: mode === "edit" ? "#fff" : fabBase(isDark).color,
+              }}
+            >
+              {mode === "edit" ? "\u2713" : "\u270E"}
+            </button>
             {mode === "view" && (
               <button
                 onClick={() => {
@@ -895,21 +927,6 @@ export function Layout({ hass }: LayoutProps) {
                 </svg>
               </button>
             )}
-            <button
-              onClick={handleToggleMode}
-              title={mode === "edit" ? "Done" : "Edit"}
-              style={{
-                ...fabBase(isDark),
-                width: 40,
-                height: 40,
-                fontSize: 16,
-                backgroundColor:
-                  mode === "edit" ? BRAND : fabBase(isDark).backgroundColor,
-                color: mode === "edit" ? "#fff" : fabBase(isDark).color,
-              }}
-            >
-              {mode === "edit" ? "\u2713" : "\u270E"}
-            </button>
           </div>
         </div>
 
