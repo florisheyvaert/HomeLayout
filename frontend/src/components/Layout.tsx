@@ -453,7 +453,9 @@ export function Layout({ hass }: LayoutProps) {
   /* ─── Keyboard shortcuts ─── */
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return;
+      const isInputFocused = (el: EventTarget | Element | null): boolean =>
+        el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement;
+      if (isInputFocused(e.target) || isInputFocused(document.activeElement)) return;
       if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key === "z") {
         e.preventDefault();
         undo();

@@ -17,6 +17,7 @@ const BADGE_ICON_SIZE = 16;
 const BADGE_FONT_SIZE = 10;
 const BADGE_LINE_HEIGHT = 16;
 const BADGE_GAP = 2;
+const ROOM_LABEL_HEIGHT = 18; // 14px font + some padding — space reserved for room name
 
 function getRoomCenter(points: Point[]) {
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
@@ -96,8 +97,29 @@ export function RoomBadgeLayer({ rooms, hass, isDark, stageRotation }: RoomBadge
       grouped.set(badge.position, list);
     }
 
+    // Check if room label is visible and where it sits
+    const labelVisible = room.label_visible !== false;
+    const labelV = room.label_v ?? "middle";
+    const labelH = room.label_h ?? "center";
+
     for (const [position, positionBadges] of grouped) {
       const anchor = getLocalAnchor(localBounds, position);
+
+      // If room label overlaps this badge position, shift badges to avoid it
+      if (labelVisible) {
+        const [badgeV, badgeH] = position.includes("-")
+          ? position.split("-") as [string, string]
+          : ["center", position];
+        // Label at bottom + badges at bottom with same horizontal alignment → push badges up
+        const hOverlap = labelH === badgeH || labelH === "center" || badgeH === "center";
+        if (badgeV === "bottom" && labelV === "bottom" && hOverlap) {
+          anchor.y -= ROOM_LABEL_HEIGHT;
+        }
+        // Label at top + badges at top with same horizontal alignment → push badges down
+        if (badgeV === "top" && labelV === "top" && hOverlap) {
+          anchor.y += ROOM_LABEL_HEIGHT;
+        }
+      }
 
       // Pre-compute each badge's content
       const badgeData = positionBadges.map((badge) => {
