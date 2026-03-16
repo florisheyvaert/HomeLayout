@@ -88,7 +88,15 @@ export function RoomBadgeLayer({ rooms, hass, isDark, stageRotation, stageScale 
 
     const center = getRoomCenter(room.points);
     // Bounds in screen-aligned local space (inside the counter-rotated group)
-    const localBounds = getLocalBounds(room.points, center.x, center.y, stageRotation);
+    // Multiply by stageScale because the badge group uses scaleX/Y = 1/stageScale,
+    // which would otherwise push the anchor positions outside the room.
+    const rawBounds = getLocalBounds(room.points, center.x, center.y, stageRotation);
+    const localBounds = {
+      minX: rawBounds.minX * stageScale,
+      maxX: rawBounds.maxX * stageScale,
+      minY: rawBounds.minY * stageScale,
+      maxY: rawBounds.maxY * stageScale,
+    };
 
     // Group badges by position for stacking
     const grouped = new Map<BadgePosition, typeof badges>();

@@ -47,13 +47,6 @@ export interface FloorConfig {
   entities: EntityPlacement[];
   furniture: FurniturePlacement[];
   background?: FloorBackground;
-  summary?: FloorSummaryConfig;
-}
-
-export interface FloorSummaryConfig {
-  x: number;
-  y: number;
-  visible: boolean;
 }
 
 export type LabelVertical = "top" | "middle" | "bottom";

@@ -10,6 +10,8 @@ interface BulkControlProps {
   onDeleteSelected: () => void;
   isDark: boolean;
   isEditMode: boolean;
+  /** Raw entity_ids for domain-level bulk control (from summary pills) */
+  domainEntityIds?: string[];
 }
 
 function getDomain(entityId: string): string {
@@ -29,8 +31,21 @@ export function BulkControl({
   onDeleteSelected,
   isDark,
   isEditMode,
+  domainEntityIds,
 }: BulkControlProps) {
   const { colors, getDomainColor } = useThemeConfig();
+
+  // Domain-level mode: work directly with entity_ids from hass.states
+  if (domainEntityIds && domainEntityIds.length > 0) {
+    return (
+      <DomainBulkControl
+        entityIds={domainEntityIds}
+        hass={hass}
+        isDark={isDark}
+      />
+    );
+  }
+
   const selectedRooms = floor.rooms.filter((r) => selectedRoomIds.includes(r.id));
   const selectedPlacements = floor.entities.filter((e) => selectedEntityIds.includes(e.id));
   const selectedFurnitureCount = selectedFurnitureIds.length;
@@ -246,6 +261,168 @@ export function BulkControl({
             Shift+click to add/remove items. Ctrl+A to select all.
           </p>
         </>
+      )}
+    </div>
+  );
+}
+
+/** Standalone domain bulk control — works with raw entity_ids, no placements needed */
+function DomainBulkControl({
+  entityIds,
+  hass,
+  isDark,
+}: {
+  entityIds: string[];
+  hass: HomeAssistant;
+  isDark: boolean;
+}) {
+  const { colors, getDomainColor } = useThemeConfig();
+
+  const domain = getDomain(entityIds[0]);
+  const domainColor = getDomainColor(domain);
+
+  const toggleableDomains = ["light", "switch", "fan", "media_player", "lock", "cover"];
+  const isToggleable = toggleableDomains.includes(domain);
+
+  const handleAllOn = () => {
+    for (const eid of entityIds) {
+      if (domain === "cover") {
+        hass.callService("cover", "open_cover", {}, { entity_id: eid });
+      } else if (domain === "lock") {
+        hass.callService("lock", "unlock", {}, { entity_id: eid });
+      } else {
+        hass.callService(domain, "turn_on", {}, { entity_id: eid });
+      }
+    }
+  };
+
+  const handleAllOff = () => {
+    for (const eid of entityIds) {
+      if (domain === "cover") {
+        hass.callService("cover", "close_cover", {}, { entity_id: eid });
+      } else if (domain === "lock") {
+        hass.callService("lock", "lock", {}, { entity_id: eid });
+      } else {
+        hass.callService(domain, "turn_off", {}, { entity_id: eid });
+      }
+    }
+  };
+
+  const handleBrightness = (val: number) => {
+    for (const eid of entityIds) {
+      hass.callService("light", "turn_on", { brightness: val }, { entity_id: eid });
+    }
+  };
+
+  const handleCoverPosition = (val: number) => {
+    for (const eid of entityIds) {
+      hass.callService("cover", "set_cover_position", { position: val }, { entity_id: eid });
+    }
+  };
+
+  const btnBase = "flex-1 py-3 rounded-lg text-sm font-medium transition-all";
+
+  return (
+    <div className="p-4 space-y-4">
+      <h3 className="text-sm font-semibold uppercase tracking-wide">
+        {domain.replace("_", " ")}
+      </h3>
+
+      <div className="text-sm" style={{ color: "var(--fp-text-secondary)" }}>
+        {entityIds.length} entit{entityIds.length > 1 ? "ies" : "y"}
+      </div>
+
+      {/* Entity list */}
+      <div className="space-y-0.5">
+        {entityIds.slice(0, 12).map((eid) => {
+          const entity = hass.states[eid];
+          const state = entity?.state ?? "unavailable";
+          const isActive = state === "on" || state === "open" || state === "playing" || state === "unlocked"
+            || (domain === "climate" && !["off", "unavailable", "unknown"].includes(state));
+          return (
+            <div key={eid} className="flex items-center gap-1.5 text-xs">
+              <span
+                className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                style={{
+                  backgroundColor: isActive ? domainColor : colors.stateInactive,
+                }}
+              />
+              <span style={{ color: isActive ? "var(--fp-text)" : "var(--fp-text-secondary)" }}>
+                {getFriendlyName(entity, eid)}
+              </span>
+            </div>
+          );
+        })}
+        {entityIds.length > 12 && (
+          <div className="text-xs" style={{ color: "var(--fp-text-secondary)" }}>
+            +{entityIds.length - 12} more
+          </div>
+        )}
+      </div>
+
+      {/* Bulk actions */}
+      {isToggleable && (
+        <>
+          <hr style={{ borderColor: "var(--fp-border)" }} />
+          <div className="flex gap-1.5">
+            <button
+              onClick={handleAllOn}
+              className={btnBase}
+              style={{
+                backgroundColor: hexToRgba(domainColor, 0.15),
+                color: domainColor,
+              }}
+            >
+              All On
+            </button>
+            <button
+              onClick={handleAllOff}
+              className={btnBase}
+              style={{
+                backgroundColor: isDark ? "#333" : "#e8e8e8",
+                color: "var(--fp-text)",
+              }}
+            >
+              All Off
+            </button>
+          </div>
+        </>
+      )}
+
+      {domain === "light" && (
+        <div>
+          <div className="flex justify-between items-center mb-1.5">
+            <label className="text-xs" style={{ color: "var(--fp-text-secondary)" }}>
+              Brightness ({entityIds.length} light{entityIds.length > 1 ? "s" : ""})
+            </label>
+          </div>
+          <input
+            type="range"
+            min={1}
+            max={255}
+            defaultValue={128}
+            onChange={(e) => handleBrightness(Number(e.target.value))}
+            className="w-full accent-amber-400"
+          />
+        </div>
+      )}
+
+      {domain === "cover" && (
+        <div>
+          <div className="flex justify-between items-center mb-1.5">
+            <label className="text-xs" style={{ color: "var(--fp-text-secondary)" }}>
+              Position ({entityIds.length} cover{entityIds.length > 1 ? "s" : ""})
+            </label>
+          </div>
+          <input
+            type="range"
+            min={0}
+            max={100}
+            defaultValue={50}
+            onChange={(e) => handleCoverPosition(Number(e.target.value))}
+            className="w-full accent-blue-500"
+          />
+        </div>
       )}
     </div>
   );

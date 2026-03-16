@@ -155,6 +155,8 @@ export function BottomSheet({ children, targetSnap, isDark }: BottomSheetProps) 
             overflowY: "auto",
             overflowX: "hidden",
             minHeight: 0,
+            display: "flex",
+            flexDirection: "column",
           }}
         >
           {children}

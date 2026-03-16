@@ -10,6 +10,7 @@ import { useTheme } from "../hooks/useTheme";
 import { ThemeProvider, BRAND } from "../theme";
 import type { HomeAssistant, AppMode, GlobalSettings, FloorBackground, CanvasTool, EntityPlacement, FurniturePlacement, FurnitureType, DeviceType, Room } from "../types";
 import type { HomeLayoutCanvasHandle } from "./canvas/HomeLayoutCanvas";
+import { FloorSummaryBar } from "./FloorSummaryBar";
 
 import logoSvg from "../../public/logo.svg?raw";
 const logoUrl = `data:image/svg+xml,${encodeURIComponent(logoSvg)}`;
@@ -189,6 +190,7 @@ export function Layout({ hass }: LayoutProps) {
   const [mode, setMode] = useState<AppMode>("view");
   const [selectedRoomIds, setSelectedRoomIds] = useState<string[]>([]);
   const [selectedEntityIds, setSelectedEntityIds] = useState<string[]>([]);
+  const [summaryDomainEntityIds, setSummaryDomainEntityIds] = useState<string[] | null>(null);
   const [selectedFurnitureIds, setSelectedFurnitureIds] = useState<string[]>([]);
   type GridMode = "none" | "xsmall" | "small" | "medium" | "large";
   const GRID_SIZES: Record<GridMode, number> = { none: 0, xsmall: 5, small: 10, medium: 20, large: 40 };
@@ -254,12 +256,14 @@ export function Layout({ hass }: LayoutProps) {
     setSelectedRoomIds([]);
     setSelectedEntityIds([]);
     setSelectedFurnitureIds([]);
+    setSummaryDomainEntityIds(null);
   }, []);
 
   const handlePanelClose = useCallback(() => {
     setSelectedRoomIds([]);
     setSelectedEntityIds([]);
     setSelectedFurnitureIds([]);
+    setSummaryDomainEntityIds(null);
     setShowAppearance(false);
     setShowQuickAccess(false);
     if (activeTool === "place" || activeTool === "furniture") {
@@ -475,6 +479,7 @@ export function Layout({ hass }: LayoutProps) {
         setSelectedRoomIds([]);
         setSelectedEntityIds([]);
         setSelectedFurnitureIds([]);
+        setSummaryDomainEntityIds(null);
         setShowAppearance(false);
         setShowQuickAccess(false);
         setShowShapeMenu(false);
@@ -677,7 +682,8 @@ export function Layout({ hass }: LayoutProps) {
   const hasFurniture = selectedFurnitureIds.length === 1;
 
   // Bottom sheet snap logic
-  const viewHasSelection = mode === "view" && (hasEntity || multiCount > 1);
+  const viewHasSummaryDomain = mode === "view" && summaryDomainEntityIds != null && summaryDomainEntityIds.length > 0;
+  const viewHasSelection = mode === "view" && (hasEntity || multiCount > 1 || viewHasSummaryDomain);
   const viewShowQuickAccess = mode === "view" && !viewHasSelection && showQuickAccess;
   const editShowAppearance = mode === "edit" && showAppearance;
   const sheetSnap: SnapPoint = editShowAppearance
@@ -829,22 +835,6 @@ export function Layout({ hass }: LayoutProps) {
           dragClientPos={dragClientPos}
           deviceViewportPreset={deviceViewportPreset}
           ghostRooms={ghostRooms}
-          onUpdateSummary={(updates) => {
-            if (!currentFloor) return;
-            const current = currentFloor.summary ?? { x: -120, y: -20, visible: true };
-            updateFloor(currentFloor.id, { summary: { ...current, ...updates } });
-          }}
-          onSummaryClickDomain={(_domain, entityIds) => {
-            // Find placement IDs for these entity_ids
-            const placementIds = (currentFloor?.entities ?? [])
-              .filter((e) => entityIds.includes(e.entity_id))
-              .map((e) => e.id);
-            if (placementIds.length > 0) {
-              setSelectedRoomIds([]);
-              setSelectedFurnitureIds([]);
-              setSelectedEntityIds(placementIds);
-            }
-          }}
         />
       </div>
 
@@ -1291,7 +1281,7 @@ export function Layout({ hass }: LayoutProps) {
           </div>
         </div>
 
-        {/* ── Bottom-center: Floor switcher ── */}
+        {/* ── Bottom-center: Floor summary + switcher ── */}
         <div
           style={{
             position: "absolute",
@@ -1299,12 +1289,34 @@ export function Layout({ hass }: LayoutProps) {
             left: "50%",
             transform: "translateX(-50%)",
             display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 10,
+            maxWidth: "calc(100% - 120px)",
+          }}
+        >
+          {mode === "view" && (
+            <FloorSummaryBar
+              hass={hass}
+              isDark={isDark}
+              glass={glass(isDark)}
+              onDomainClick={(_domain, entityIds) => {
+                setSelectedRoomIds([]);
+                setSelectedFurnitureIds([]);
+                setSelectedEntityIds([]);
+                setSummaryDomainEntityIds(entityIds);
+              }}
+            />
+          )}
+        <div
+          style={{
+            display: "flex",
             gap: 2,
             padding: 3,
             borderRadius: 14,
             pointerEvents: "auto",
             overflow: "auto",
-            maxWidth: "calc(100% - 120px)",
+            maxWidth: "100%",
             ...glass(isDark),
           }}
         >
@@ -1334,6 +1346,7 @@ export function Layout({ hass }: LayoutProps) {
               </button>
             );
           })}
+        </div>
         </div>
 
         {/* ── Bottom-left: Scale bar (edit mode only) ── */}
@@ -1401,6 +1414,7 @@ export function Layout({ hass }: LayoutProps) {
                 floorBackground={currentFloor?.background}
                 onUpdateFloorBackground={handleUpdateFloorBackground}
                 onClose={handlePanelClose}
+                summaryDomainEntityIds={summaryDomainEntityIds}
               />
             )}
           </BottomSheet>
@@ -1439,6 +1453,7 @@ export function Layout({ hass }: LayoutProps) {
                 floorBackground={currentFloor?.background}
                 onUpdateFloorBackground={handleUpdateFloorBackground}
                 onClose={handlePanelClose}
+                summaryDomainEntityIds={summaryDomainEntityIds}
               />
             )}
           </SideDrawer>

@@ -15,53 +15,26 @@ export function FavoritesPanel({ favorites, hass, isDark, onRemoveFavorite, onSh
 
   const sorted = [...favorites].sort((a, b) => a.order - b.order);
 
+  const btnStyle = (active?: boolean): React.CSSProperties => ({
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    border: "none",
+    backgroundColor: active ? "var(--fp-accent)" : isDark ? "#333" : "#e8e8e8",
+    color: active ? "#fff" : "var(--fp-text)",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  });
+
   return (
-    <div style={{ padding: 16 }}>
+    <div style={{ padding: 16, display: "flex", flexDirection: "column", minHeight: "100%" }}>
       {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, paddingRight: 36 }}>
+      <div style={{ marginBottom: 12, paddingRight: 36 }}>
         <h3 style={{ fontSize: 13, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--fp-text)", margin: 0 }}>
           Quick Access
         </h3>
-        <div style={{ display: "flex", gap: 4 }}>
-          <button
-            onClick={onShowEditor}
-            title="Add favorite"
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: 8,
-              border: "none",
-              backgroundColor: isDark ? "#333" : "#e8e8e8",
-              color: "var(--fp-text)",
-              fontSize: 18,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            +
-          </button>
-          <button
-            onClick={() => setEditMode((e) => !e)}
-            title={editMode ? "Done editing" : "Edit favorites"}
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: 8,
-              border: "none",
-              backgroundColor: editMode ? "var(--fp-accent)" : isDark ? "#333" : "#e8e8e8",
-              color: editMode ? "#fff" : "var(--fp-text)",
-              fontSize: 14,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            &#9998;
-          </button>
-        </div>
       </div>
 
       {/* Grid or empty state */}
@@ -95,6 +68,20 @@ export function FavoritesPanel({ favorites, hass, isDark, onRemoveFavorite, onSh
           ))}
         </div>
       )}
+
+      {/* Actions pinned to bottom */}
+      <div style={{ display: "flex", gap: 4, marginTop: "auto", paddingTop: 12 }}>
+        <button onClick={onShowEditor} title="Add favorite" style={{ ...btnStyle(), fontSize: 18 }}>
+          +
+        </button>
+        <button
+          onClick={() => setEditMode((e) => !e)}
+          title={editMode ? "Done editing" : "Edit favorites"}
+          style={{ ...btnStyle(editMode), fontSize: 14 }}
+        >
+          &#9998;
+        </button>
+      </div>
     </div>
   );
 }

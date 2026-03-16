@@ -56,6 +56,8 @@ interface ControlPanelProps {
   floorBackground?: FloorBackground;
   onUpdateFloorBackground?: (bg: FloorBackground) => void;
   onClose?: () => void;
+  /** Raw entity_ids for domain-level bulk control (from summary pills) */
+  summaryDomainEntityIds?: string[] | null;
 }
 
 export function ControlPanel({
@@ -91,6 +93,7 @@ export function ControlPanel({
   floorBackground,
   onUpdateFloorBackground,
   onClose,
+  summaryDomainEntityIds,
 }: ControlPanelProps) {
   const [showFavoriteEditor, setShowFavoriteEditor] = useState(false);
 
@@ -170,6 +173,21 @@ export function ControlPanel({
 
   // View mode
   if (mode === "view") {
+    // Summary domain pill clicked → domain bulk control
+    if (summaryDomainEntityIds && summaryDomainEntityIds.length > 0 && floor) {
+      return wrap(
+        <BulkControl
+          floor={floor}
+          selectedRoomIds={[]}
+          selectedEntityIds={[]}
+          hass={hass}
+          onDeleteSelected={onDeleteSelected}
+          isDark={isDark}
+          isEditMode={false}
+          domainEntityIds={summaryDomainEntityIds}
+        />
+      );
+    }
     // Multi-selection → bulk control
     if (multiSelectCount > 1 && floor) {
       return wrap(
