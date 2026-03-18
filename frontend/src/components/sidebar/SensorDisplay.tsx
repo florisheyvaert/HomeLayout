@@ -26,47 +26,45 @@ export function SensorDisplay({ entity, isDark, domain }: SensorDisplayProps) {
   const displayValue = isNumeric ? numericState.toLocaleString() : state;
 
   return (
-    <div className="space-y-3">
-      {/* Main value card */}
+    <div className="space-y-1.5">
+      {/* Compact value row */}
       <div
-        className="p-4 rounded-lg text-center"
+        className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg"
         style={{ backgroundColor: isDark ? "#333" : "#f0f0f0" }}
       >
-        <div className="text-2xl mb-1 flex justify-center">
-          <DomIcon icon={icon} size={28} />
-        </div>
+        <DomIcon icon={icon} size={18} />
         {isBinary ? (
-          <div className="flex items-center justify-center gap-2">
+          <div className="flex items-center gap-1.5 flex-1">
             <span
-              className="w-3 h-3 rounded-full"
+              className="w-2 h-2 rounded-full"
               style={{
                 backgroundColor: isActive ? getDomainColor(domain) : colors.stateInactive,
-                boxShadow: isActive ? `0 0 8px ${hexToRgba(getDomainColor(domain), 0.5)}` : "none",
+                boxShadow: isActive ? `0 0 6px ${hexToRgba(getDomainColor(domain), 0.5)}` : "none",
               }}
             />
-            <span className="text-xl font-semibold capitalize">{state}</span>
+            <span className="text-sm font-medium capitalize">{state}</span>
           </div>
         ) : (
-          <div className="text-3xl font-light">
+          <span className="text-lg font-light flex-1">
             {displayValue}
             {unit && (
-              <span className="text-sm ml-1" style={{ color: "var(--fp-text-secondary)" }}>
+              <span className="text-[10px] ml-0.5" style={{ color: "var(--fp-text-secondary)" }}>
                 {unit}
               </span>
             )}
-          </div>
+          </span>
         )}
         {deviceClass && (
-          <div className="text-xs mt-1 capitalize" style={{ color: "var(--fp-text-secondary)" }}>
+          <span className="text-[10px] capitalize" style={{ color: "var(--fp-text-secondary)" }}>
             {deviceClass.replace("_", " ")}
-          </div>
+          </span>
         )}
       </div>
 
       {/* Last changed */}
       {entity?.last_changed && (
-        <div className="text-xs" style={{ color: "var(--fp-text-secondary)" }}>
-          Last changed: {new Date(entity.last_changed).toLocaleString()}
+        <div className="text-[10px] px-1" style={{ color: "var(--fp-text-secondary)" }}>
+          Updated {new Date(entity.last_changed).toLocaleString()}
         </div>
       )}
     </div>

@@ -17,6 +17,7 @@ import { RoomEditor } from "./RoomEditor";
 import { EntityBrowser } from "./EntityBrowser";
 import { EntityControl } from "./EntityControl";
 import { BulkControl } from "./BulkControl";
+import { MultiEntityPanel } from "./MultiEntityPanel";
 import { AppearanceSettings } from "./AppearanceSettings";
 import { FavoritesPanel } from "./FavoritesPanel";
 import { FavoriteEditor } from "./FavoriteEditor";
@@ -58,6 +59,14 @@ interface ControlPanelProps {
   onClose?: () => void;
   /** Raw entity_ids for domain-level bulk control (from summary pills) */
   summaryDomainEntityIds?: string[] | null;
+  /** Deselect a single entity by entity_id (removes all placements of that entity) */
+  onDeselectEntity?: (entityId: string) => void;
+  /** Deselect all entities */
+  onDeselectAll?: () => void;
+  /** Remove a single entity_id from the summary domain selection */
+  onDeselectSummaryEntity?: (entityId: string) => void;
+  /** Clear all summary domain selections */
+  onClearSummaryDomain?: () => void;
 }
 
 export function ControlPanel({
@@ -94,6 +103,10 @@ export function ControlPanel({
   onUpdateFloorBackground,
   onClose,
   summaryDomainEntityIds,
+  onDeselectEntity,
+  onDeselectAll,
+  onDeselectSummaryEntity,
+  onClearSummaryDomain,
 }: ControlPanelProps) {
   const [showFavoriteEditor, setShowFavoriteEditor] = useState(false);
 
@@ -153,11 +166,8 @@ export function ControlPanel({
     </div>
   );
 
-  // Edit mode: selection takes priority over appearance settings
-  const hasEditSelection = mode === "edit" && (multiSelectCount > 0 || activeTool === "place" || activeTool === "furniture");
-
-  // Appearance settings panel (only if no edit selection)
-  if (showAppearance && !hasEditSelection) {
+  // Appearance settings panel (always on top when active)
+  if (showAppearance) {
     return wrap(
       <AppearanceSettings
         settings={settings}
@@ -173,50 +183,45 @@ export function ControlPanel({
 
   // View mode
   if (mode === "view") {
-    // Summary domain pill clicked → domain bulk control
-    if (summaryDomainEntityIds && summaryDomainEntityIds.length > 0 && floor) {
+    // Summary domain pill clicked → stacked individual controls
+    if (summaryDomainEntityIds && summaryDomainEntityIds.length > 0 && onDeselectSummaryEntity && onClearSummaryDomain) {
       return wrap(
-        <BulkControl
-          floor={floor}
-          selectedRoomIds={[]}
-          selectedEntityIds={[]}
+        <MultiEntityPanel
+          entityIds={summaryDomainEntityIds}
           hass={hass}
-          onDeleteSelected={onDeleteSelected}
           isDark={isDark}
-          isEditMode={false}
-          domainEntityIds={summaryDomainEntityIds}
+          isMobile={isMobile}
+          onDeselectEntity={onDeselectSummaryEntity}
+          onDeselectAll={onClearSummaryDomain}
         />
       );
     }
-    // Multi-selection → bulk control
-    if (multiSelectCount > 1 && floor) {
-      return wrap(
-        <BulkControl
-          floor={floor}
-          selectedRoomIds={selectedRoomIds}
-          selectedEntityIds={selectedEntityIds}
-          selectedFurnitureIds={selectedFurnitureIds}
-          hass={hass}
-          onDeleteSelected={onDeleteSelected}
-          isDark={isDark}
-          isEditMode={false}
-        />
-      );
-    }
-    // Single entity → entity control
-    if (selectedEntity) {
-      return wrap(
-        <EntityControl
-          placement={selectedEntity}
-          entity={hass.states[selectedEntity.entity_id]}
-          hass={hass}
-          onUpdate={onUpdateEntity}
-          onRemove={onRemoveEntity}
-          isDark={isDark}
-          isEditMode={false}
-          effectiveIconSize={cascadedIconSize}
-        />
-      );
+
+    // Entity selection (single or multi) → stacked individual controls
+    if (selectedEntityIds.length > 0 && floor) {
+      // Deduplicate by entity_id (multiple placements → one control)
+      const seen = new Set<string>();
+      const uniqueEntityIds: string[] = [];
+      for (const id of selectedEntityIds) {
+        const placement = floor.entities.find((e) => e.id === id);
+        if (placement && !seen.has(placement.entity_id)) {
+          seen.add(placement.entity_id);
+          uniqueEntityIds.push(placement.entity_id);
+        }
+      }
+
+      if (uniqueEntityIds.length > 0 && onDeselectEntity && onDeselectAll) {
+        return wrap(
+          <MultiEntityPanel
+            entityIds={uniqueEntityIds}
+            hass={hass}
+            isDark={isDark}
+            isMobile={isMobile}
+            onDeselectEntity={onDeselectEntity}
+            onDeselectAll={onDeselectAll}
+          />
+        );
+      }
     }
     // No selection → show favorites panel or editor
     if (showFavoriteEditor) {

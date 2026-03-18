@@ -60,87 +60,79 @@ export function LightControl({ entityId, entity, hass, isDark }: LightControlPro
   const { icon } = resolveEntityIcon("light", state);
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {/* Toggle */}
       <button
         onClick={handleToggle}
-        className="w-full rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 py-3"
+        className="w-full rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5 py-2"
         style={{
           backgroundColor: isOn ? hexToRgba(lightWarm, 0.2) : isDark ? "#333" : "#e8e8e8",
           color: isOn ? lightWarm : "var(--fp-text)",
           border: `1px solid ${isOn ? hexToRgba(lightWarm, 0.3) : "transparent"}`,
         }}
       >
-        <DomIcon icon={icon} size={20} />
+        <DomIcon icon={icon} size={14} />
         {isOn ? "Turn Off" : "Turn On"}
       </button>
 
       {/* Brightness */}
-      {supportsBrightness && isOn && (
+      {supportsBrightness && (
         <div>
-          <div className="flex justify-between items-center mb-1.5">
-            <label className="text-xs" style={{ color: "var(--fp-text-secondary)" }}>
+          <div className="flex justify-between items-center mb-0.5">
+            <label className="text-[10px]" style={{ color: "var(--fp-text-secondary)" }}>
               Brightness
             </label>
-            <span className="text-xs font-medium">{brightPct}%</span>
+            <span className="text-[10px] font-medium">{brightPct}%</span>
           </div>
-          <div className="relative">
-            <input
-              type="range"
-              min={1}
-              max={255}
-              value={brightness}
-              onChange={(e) => handleBrightness(Number(e.target.value))}
-              className="w-full accent-amber-400"
-              style={{
-                background: `linear-gradient(to right, #333 0%, ${lightWarm} ${brightPct}%, ${isDark ? "#444" : "#ddd"} ${brightPct}%)`,
-                borderRadius: "4px",
-                height: "6px",
-              }}
-            />
-          </div>
+          <input
+            type="range"
+            min={1}
+            max={255}
+            value={brightness}
+            onChange={(e) => handleBrightness(Number(e.target.value))}
+            className="w-full accent-amber-400"
+            style={{
+              background: `linear-gradient(to right, #333 0%, ${lightWarm} ${brightPct}%, ${isDark ? "#444" : "#ddd"} ${brightPct}%)`,
+              borderRadius: "4px",
+              height: "4px",
+            }}
+          />
         </div>
       )}
 
       {/* Color temperature */}
-      {hasColorTemp && isOn && (
+      {hasColorTemp && (
         <div>
-          <div className="flex justify-between items-center mb-1.5">
-            <label className="text-xs" style={{ color: "var(--fp-text-secondary)" }}>
-              Color Temperature
+          <div className="flex justify-between items-center mb-0.5">
+            <label className="text-[10px]" style={{ color: "var(--fp-text-secondary)" }}>
+              Color Temp
             </label>
-            <span className="text-xs font-medium">{colorTemp} mireds</span>
+            <span className="text-[10px] font-medium">{colorTemp} mireds</span>
           </div>
-          <div className="relative">
-            <input
-              type="range"
-              min={minMireds}
-              max={maxMireds}
-              value={colorTemp}
-              onChange={(e) => handleColorTemp(Number(e.target.value))}
-              className="w-full"
-              style={{
-                background: `linear-gradient(to right, ${coolColor}, ${warmColor})`,
-                borderRadius: "4px",
-                height: "6px",
-              }}
-            />
-            <div className="flex justify-between mt-0.5">
-              <span className="text-[10px]" style={{ color: "var(--fp-text-secondary)" }}>Cool</span>
-              <span className="text-[10px]" style={{ color: "var(--fp-text-secondary)" }}>Warm</span>
-            </div>
-          </div>
+          <input
+            type="range"
+            min={minMireds}
+            max={maxMireds}
+            value={colorTemp}
+            onChange={(e) => handleColorTemp(Number(e.target.value))}
+            className="w-full"
+            style={{
+              background: `linear-gradient(to right, ${coolColor}, ${warmColor})`,
+              borderRadius: "4px",
+              height: "4px",
+            }}
+          />
         </div>
       )}
 
       {/* Color mode indicator */}
-      {supportsColorTemp && isOn && Boolean(attrs.color_mode) && (
-        <div className="text-xs" style={{ color: "var(--fp-text-secondary)" }}>
+      {supportsColorTemp && Boolean(attrs.color_mode) && (
+        <div className="text-[10px]" style={{ color: "var(--fp-text-secondary)" }}>
           Mode: {String(attrs.color_mode)}{" "}
           {Array.isArray(attrs.rgb_color) && (
-            <span className="ml-2 inline-flex items-center gap-1">
+            <span className="ml-1 inline-flex items-center gap-1">
               <span
-                className="w-3 h-3 rounded-full inline-block border"
+                className="w-2.5 h-2.5 rounded-full inline-block border"
                 style={{
                   backgroundColor: `rgb(${(attrs.rgb_color as number[]).join(",")})`,
                   borderColor: isDark ? "#555" : "#ccc",

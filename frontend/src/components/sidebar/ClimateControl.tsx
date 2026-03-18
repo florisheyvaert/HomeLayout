@@ -58,45 +58,44 @@ export function ClimateControl({ entityId, entity, hass, isDark }: ClimateContro
   const accent = getDomainColor("climate");
 
   return (
-    <div className="space-y-3">
-      {/* Current temperature */}
+    <div className="space-y-2">
+      {/* Current temperature - compact inline */}
       {currentTemp !== undefined && (
         <div
-          className="p-3 rounded-lg text-center"
+          className="flex items-center justify-between px-2.5 py-1.5 rounded-lg"
           style={{ backgroundColor: isDark ? "#333" : "#f0f0f0" }}
         >
-          <div className="text-xs mb-1" style={{ color: "var(--fp-text-secondary)" }}>
-            Current
+          <span className="text-[10px]" style={{ color: "var(--fp-text-secondary)" }}>Current</span>
+          <div className="flex items-center gap-1.5">
+            <span className="text-lg font-light">
+              {currentTemp}<span className="text-[10px] ml-0.5">{unit}</span>
+            </span>
+            {hvacAction && hvacAction !== "off" && (
+              <span
+                className="text-[10px] capitalize"
+                style={{ color: actionColors[hvacAction] ?? "var(--fp-text-secondary)" }}
+              >
+                {hvacAction}
+              </span>
+            )}
           </div>
-          <div className="text-3xl font-light">
-            {currentTemp}
-            <span className="text-base ml-0.5">{unit}</span>
-          </div>
-          {hvacAction && hvacAction !== "off" && (
-            <div
-              className="text-xs mt-1 capitalize"
-              style={{ color: actionColors[hvacAction] ?? "var(--fp-text-secondary)" }}
-            >
-              {hvacAction}
-            </div>
-          )}
         </div>
       )}
 
       {/* Target temperature */}
       {isActive && targetTemp !== undefined && (
         <div>
-          <div className="flex justify-between items-center mb-1.5">
-            <label className="text-xs" style={{ color: "var(--fp-text-secondary)" }}>
+          <div className="flex justify-between items-center mb-0.5">
+            <label className="text-[10px]" style={{ color: "var(--fp-text-secondary)" }}>
               Target
             </label>
-            <span className="text-sm font-medium">{tempValue}{unit}</span>
+            <span className="text-xs font-medium">{tempValue}{unit}</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <button
               onClick={() => handleSetTemp(Math.max(minTemp, tempValue - tempStep))}
-              className="w-10 h-10 rounded-lg text-lg flex items-center justify-center"
-              style={{ backgroundColor: isDark ? "#333" : "#e8e8e8" }}
+              className="w-7 h-7 rounded-md text-sm flex items-center justify-center"
+              style={{ backgroundColor: isDark ? "#333" : "#e8e8e8", border: "none", cursor: "pointer", color: "var(--fp-text)" }}
             >
               −
             </button>
@@ -111,8 +110,8 @@ export function ClimateControl({ entityId, entity, hass, isDark }: ClimateContro
             />
             <button
               onClick={() => handleSetTemp(Math.min(maxTemp, tempValue + tempStep))}
-              className="w-10 h-10 rounded-lg text-lg flex items-center justify-center"
-              style={{ backgroundColor: isDark ? "#333" : "#e8e8e8" }}
+              className="w-7 h-7 rounded-md text-sm flex items-center justify-center"
+              style={{ backgroundColor: isDark ? "#333" : "#e8e8e8", border: "none", cursor: "pointer", color: "var(--fp-text)" }}
             >
               +
             </button>
@@ -123,12 +122,12 @@ export function ClimateControl({ entityId, entity, hass, isDark }: ClimateContro
       {/* HVAC mode selector */}
       {hvacModes.length > 0 && (
         <div>
-          <label className="block text-xs mb-1.5" style={{ color: "var(--fp-text-secondary)" }}>
+          <label className="block text-[10px] mb-1" style={{ color: "var(--fp-text-secondary)" }}>
             Mode
           </label>
           <div
-            className="grid gap-1.5"
-            style={{ gridTemplateColumns: `repeat(${Math.min(hvacModes.length, 3)}, 1fr)` }}
+            className="grid gap-1"
+            style={{ gridTemplateColumns: `repeat(${Math.min(hvacModes.length, 4)}, 1fr)` }}
           >
             {hvacModes.map((mode) => {
               const { icon: modeIcon } = resolveEntityIcon("climate", mode);
@@ -136,16 +135,16 @@ export function ClimateControl({ entityId, entity, hass, isDark }: ClimateContro
                 <button
                   key={mode}
                   onClick={() => handleSetMode(mode)}
-                  className="rounded-lg text-xs font-medium capitalize transition-all flex flex-col items-center justify-center gap-1"
+                  className="rounded-md text-[10px] font-medium capitalize transition-all flex flex-col items-center justify-center gap-0.5"
                   style={{
                     backgroundColor: state === mode ? hexToRgba(accent, 0.15) : isDark ? "#333" : "#e8e8e8",
                     color: state === mode ? accent : "var(--fp-text)",
-                    height: 48,
+                    height: 36,
                     border: "none",
                     cursor: "pointer",
                   }}
                 >
-                  <DomIcon icon={modeIcon} size={16} />
+                  <DomIcon icon={modeIcon} size={12} />
                   <span>{mode.replace("_", " ")}</span>
                 </button>
               );
@@ -157,22 +156,22 @@ export function ClimateControl({ entityId, entity, hass, isDark }: ClimateContro
       {/* Fan mode selector */}
       {fanModes.length > 0 && isActive && (
         <div>
-          <label className="block text-xs mb-1.5" style={{ color: "var(--fp-text-secondary)" }}>
+          <label className="block text-[10px] mb-1" style={{ color: "var(--fp-text-secondary)" }}>
             Fan
           </label>
           <div
-            className="grid gap-1.5"
-            style={{ gridTemplateColumns: `repeat(${Math.min(fanModes.length, 3)}, 1fr)` }}
+            className="grid gap-1"
+            style={{ gridTemplateColumns: `repeat(${Math.min(fanModes.length, 4)}, 1fr)` }}
           >
             {fanModes.map((mode) => (
               <button
                 key={mode}
                 onClick={() => handleSetFanMode(mode)}
-                className="rounded-lg text-xs font-medium capitalize transition-all"
+                className="rounded-md text-[10px] font-medium capitalize transition-all"
                 style={{
                   backgroundColor: fanMode === mode ? hexToRgba(accent, 0.15) : isDark ? "#333" : "#e8e8e8",
                   color: fanMode === mode ? accent : "var(--fp-text)",
-                  height: 40,
+                  height: 30,
                   border: "none",
                   cursor: "pointer",
                 }}

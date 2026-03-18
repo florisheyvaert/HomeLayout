@@ -259,17 +259,52 @@ export function Layout({ hass }: LayoutProps) {
     setSummaryDomainEntityIds(null);
   }, []);
 
+  /** Remove all placements of a specific entity_id from selection */
+  const handleDeselectEntity = useCallback((entityId: string) => {
+    const placementIds = (currentFloor?.entities ?? [])
+      .filter((e) => e.entity_id === entityId)
+      .map((e) => e.id);
+    setSelectedEntityIds((prev) => prev.filter((id) => !placementIds.includes(id)));
+  }, [currentFloor]);
+
+  /** Deselect all entities */
+  const handleDeselectAllEntities = useCallback(() => {
+    setSelectedEntityIds([]);
+  }, []);
+
+  /** Remove a single entity_id from summary domain selection */
+  const handleDeselectSummaryEntity = useCallback((entityId: string) => {
+    setSummaryDomainEntityIds((prev) => {
+      if (!prev) return prev;
+      const next = prev.filter((id) => id !== entityId);
+      return next.length > 0 ? next : null;
+    });
+  }, []);
+
+  /** Clear all summary domain selections */
+  const handleClearSummaryDomain = useCallback(() => {
+    setSummaryDomainEntityIds(null);
+  }, []);
+
   const handlePanelClose = useCallback(() => {
+    // Pop the topmost panel layer instead of clearing everything
+    if (showAppearance) {
+      setShowAppearance(false);
+      return;
+    }
+    if (showQuickAccess) {
+      setShowQuickAccess(false);
+      return;
+    }
+    // No overlay — clear selections
     setSelectedRoomIds([]);
     setSelectedEntityIds([]);
     setSelectedFurnitureIds([]);
     setSummaryDomainEntityIds(null);
-    setShowAppearance(false);
-    setShowQuickAccess(false);
     if (activeTool === "place" || activeTool === "furniture") {
       selectTool("select");
     }
-  }, [activeTool, selectTool]);
+  }, [activeTool, selectTool, showAppearance, showQuickAccess]);
 
   const handleMarqueeSelect = useCallback(
     (roomIds: string[], entityIds: string[], additive: boolean, furnitureIds?: string[]) => {
@@ -683,11 +718,13 @@ export function Layout({ hass }: LayoutProps) {
 
   // Bottom sheet snap logic
   const viewHasSummaryDomain = mode === "view" && summaryDomainEntityIds != null && summaryDomainEntityIds.length > 0;
+  const viewHasEntitySelection = mode === "view" && selectedEntityIds.length > 0;
   const viewHasSelection = mode === "view" && (hasEntity || multiCount > 1 || viewHasSummaryDomain);
   const viewShowQuickAccess = mode === "view" && !viewHasSelection && showQuickAccess;
-  const editShowAppearance = mode === "edit" && showAppearance;
-  const sheetSnap: SnapPoint = editShowAppearance
+  const sheetSnap: SnapPoint = showAppearance
     ? "half"
+    : viewHasEntitySelection || viewHasSummaryDomain
+      ? "half"
     : viewHasSelection
       ? "peek"
       : viewShowQuickAccess
@@ -702,7 +739,8 @@ export function Layout({ hass }: LayoutProps) {
 
   // Has content to show in ControlPanel?
   const panelHasContent =
-    editShowAppearance ||
+    showAppearance ||
+    viewHasEntitySelection ||
     viewHasSelection ||
     viewShowQuickAccess ||
     (mode === "edit" &&
@@ -1395,7 +1433,7 @@ export function Layout({ hass }: LayoutProps) {
                 haAreas={floorAreas}
                 hass={hass}
                 isDark={isDark}
-                showAppearance={editShowAppearance}
+                showAppearance={showAppearance}
                 settings={store.settings}
                 onUpdateSettings={updateSettings}
                 themePreference={preference}
@@ -1415,6 +1453,10 @@ export function Layout({ hass }: LayoutProps) {
                 onUpdateFloorBackground={handleUpdateFloorBackground}
                 onClose={handlePanelClose}
                 summaryDomainEntityIds={summaryDomainEntityIds}
+                onDeselectEntity={handleDeselectEntity}
+                onDeselectAll={handleDeselectAllEntities}
+                onDeselectSummaryEntity={handleDeselectSummaryEntity}
+                onClearSummaryDomain={handleClearSummaryDomain}
               />
             )}
           </BottomSheet>
@@ -1435,7 +1477,7 @@ export function Layout({ hass }: LayoutProps) {
                 haAreas={floorAreas}
                 hass={hass}
                 isDark={isDark}
-                showAppearance={editShowAppearance}
+                showAppearance={showAppearance}
                 settings={store.settings}
                 onUpdateSettings={updateSettings}
                 themePreference={preference}
@@ -1454,6 +1496,10 @@ export function Layout({ hass }: LayoutProps) {
                 onUpdateFloorBackground={handleUpdateFloorBackground}
                 onClose={handlePanelClose}
                 summaryDomainEntityIds={summaryDomainEntityIds}
+                onDeselectEntity={handleDeselectEntity}
+                onDeselectAll={handleDeselectAllEntities}
+                onDeselectSummaryEntity={handleDeselectSummaryEntity}
+                onClearSummaryDomain={handleClearSummaryDomain}
               />
             )}
           </SideDrawer>

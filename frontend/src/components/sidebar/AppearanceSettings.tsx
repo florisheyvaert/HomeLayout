@@ -880,70 +880,73 @@ export function AppearanceSettings({
         </div>
       </div>
 
-      {/* ─── Entity Colors ─── */}
-      <div>
-        <label className="block text-xs mb-1.5" style={{ color: "var(--fp-text-secondary)" }}>
-          Entity Colors
-        </label>
-        <div className="space-y-1">
-          {Object.entries(DOMAIN_COLOR_LABELS).map(([key, label]) => (
-            <ColorRow
-              key={key}
-              colorKey={key}
-              label={label}
-              effectiveColor={getEffectiveColor(key)}
-              isOverridden={!!settings.domain_colors?.[key]}
-              isDark={isDark}
-              isExpanded={expandedColorKey === key}
-              onToggle={() => setExpandedColorKey(expandedColorKey === key ? null : key)}
-              onChange={(color) => handleColorChange(key, color)}
-              onReset={() => handleColorReset(key)}
-            />
-          ))}
+      {/* ─── Entity Colors + Entity Icons side by side ─── */}
+      <div className="grid gap-4" style={{ gridTemplateColumns: "1fr 1fr" }}>
+        {/* Entity Colors */}
+        <div>
+          <label className="block text-xs mb-1.5" style={{ color: "var(--fp-text-secondary)" }}>
+            Entity Colors
+          </label>
+          <div className="space-y-1">
+            {Object.entries(DOMAIN_COLOR_LABELS).map(([key, label]) => (
+              <ColorRow
+                key={key}
+                colorKey={key}
+                label={label}
+                effectiveColor={getEffectiveColor(key)}
+                isOverridden={!!settings.domain_colors?.[key]}
+                isDark={isDark}
+                isExpanded={expandedColorKey === key}
+                onToggle={() => setExpandedColorKey(expandedColorKey === key ? null : key)}
+                onChange={(color) => handleColorChange(key, color)}
+                onReset={() => handleColorReset(key)}
+              />
+            ))}
+          </div>
         </div>
-      </div>
 
-      {/* ─── Entity Icons ─── */}
-      <div>
-        <label className="block text-xs mb-1.5" style={{ color: "var(--fp-text-secondary)" }}>
-          Entity Icons
-        </label>
-        <div className="space-y-1">
-          {Object.entries(DOMAIN_ICON_LABELS).map(([domain, label]) => {
-            const resolved = resolveCurrentDomainIcon(domain);
-            const isOverridden = !!settings.domain_icons?.[domain];
-            const dcList = DOMAIN_DEVICE_CLASSES[domain];
-            return (
-              <div key={domain}>
-                {iconRow(
-                  domain,
-                  label,
-                  resolved.icon,
-                  isOverridden,
-                  () => setPickerTarget({ type: "domain", domain }),
-                  () => handleDomainIconReset(domain),
-                  domain,
-                )}
-                {dcList && (
-                  <div style={{ paddingLeft: 16 }} className="space-y-1 mt-1">
-                    {dcList.map(({ dc, label: dcLabel }) => {
-                      const dcResolved = resolveCurrentDomainIcon(domain, dc);
-                      const dcOverridden = !!settings.domain_icons?.[`${domain}.${dc}`];
-                      return iconRow(
-                        `${domain}.${dc}`,
-                        dcLabel,
-                        dcResolved.icon,
-                        dcOverridden,
-                        () => setPickerTarget({ type: "domain", domain, deviceClass: dc }),
-                        () => handleDomainIconReset(domain, dc),
-                        domain,
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+        {/* Entity Icons */}
+        <div>
+          <label className="block text-xs mb-1.5" style={{ color: "var(--fp-text-secondary)" }}>
+            Entity Icons
+          </label>
+          <div className="space-y-1">
+            {Object.entries(DOMAIN_ICON_LABELS).map(([domain, label]) => {
+              const resolved = resolveCurrentDomainIcon(domain);
+              const isOverridden = !!settings.domain_icons?.[domain];
+              const dcList = DOMAIN_DEVICE_CLASSES[domain];
+              return (
+                <div key={domain}>
+                  {iconRow(
+                    domain,
+                    label,
+                    resolved.icon,
+                    isOverridden,
+                    () => setPickerTarget({ type: "domain", domain }),
+                    () => handleDomainIconReset(domain),
+                    domain,
+                  )}
+                  {dcList && (
+                    <div style={{ paddingLeft: 16 }} className="space-y-1 mt-1">
+                      {dcList.map(({ dc, label: dcLabel }) => {
+                        const dcResolved = resolveCurrentDomainIcon(domain, dc);
+                        const dcOverridden = !!settings.domain_icons?.[`${domain}.${dc}`];
+                        return iconRow(
+                          `${domain}.${dc}`,
+                          dcLabel,
+                          dcResolved.icon,
+                          dcOverridden,
+                          () => setPickerTarget({ type: "domain", domain, deviceClass: dc }),
+                          () => handleDomainIconReset(domain, dc),
+                          domain,
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
 

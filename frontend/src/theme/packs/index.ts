@@ -2,9 +2,6 @@ import type { IconPack } from "../types";
 import { emojiPack } from "./emoji";
 import { mdiPack } from "./mdi";
 import { mdiOutlinePack } from "./mdi-outline";
-import { mdiHomePack } from "./mdi-home";
-import { mdiCozyPack } from "./mdi-cozy";
-import { mdiTechPack } from "./mdi-tech";
 import { faSolidPack } from "./fa-solid";
 import { faRegularPack } from "./fa-regular";
 import { bsIconsPack } from "./bs-icons";
@@ -15,9 +12,6 @@ export const iconPacks: Record<string, IconPack> = {
   emoji: emojiPack,
   mdi: mdiPack,
   "mdi-outline": mdiOutlinePack,
-  "mdi-home": mdiHomePack,
-  "mdi-cozy": mdiCozyPack,
-  "mdi-tech": mdiTechPack,
   "fa-solid": faSolidPack,
   "fa-regular": faRegularPack,
   "bs-icons": bsIconsPack,

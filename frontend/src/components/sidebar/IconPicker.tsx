@@ -102,6 +102,8 @@ export function getIconIndex(): IconCandidate[] {
   return _iconIndex;
 }
 
+const PAGE_SIZE = 120;
+
 export function IconPicker({
   label,
   isDark,
@@ -115,12 +117,20 @@ export function IconPicker({
 }) {
   const { getDomainColor } = useThemeConfig();
   const [query, setQuery] = useState("");
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const inputRef = useRef<HTMLInputElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const allIcons = useMemo(() => getIconIndex(), []);
 
   useEffect(() => {
     setTimeout(() => inputRef.current?.focus(), 50);
   }, []);
+
+  // Reset pagination when search changes
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+    scrollRef.current?.scrollTo(0, 0);
+  }, [query]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -129,15 +139,18 @@ export function IconPicker({
     return allIcons.filter((c) => terms.every((t) => c.keywords.includes(t)));
   }, [query, allIcons]);
 
+  const visibleIcons = useMemo(() => filtered.slice(0, visibleCount), [filtered, visibleCount]);
+  const hasMore = visibleCount < filtered.length;
+
   const grouped = useMemo(() => {
     const map = new Map<string, IconCandidate[]>();
-    for (const c of filtered) {
+    for (const c of visibleIcons) {
       const list = map.get(c.packId) ?? [];
       list.push(c);
       map.set(c.packId, list);
     }
     return map;
-  }, [filtered]);
+  }, [visibleIcons]);
 
   const handleSelect = useCallback(
     (c: IconCandidate) => {
@@ -151,6 +164,8 @@ export function IconPicker({
     },
     [onSelect, onClose],
   );
+
+  const loadMore = () => setVisibleCount((v) => v + PAGE_SIZE);
 
   return (
     <div
@@ -202,12 +217,12 @@ export function IconPicker({
           }}
         />
         <div className="text-xs mt-1" style={{ color: "var(--fp-text-secondary)" }}>
-          {filtered.length} icons found
+          {filtered.length} icons found{hasMore ? ` (showing ${visibleCount})` : ""}
         </div>
       </div>
 
       {/* Results */}
-      <div className="flex-1 overflow-y-auto px-3 pb-3" style={{ scrollbarWidth: "thin" }}>
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-3 pb-3" style={{ scrollbarWidth: "thin" }}>
         {Array.from(grouped.entries()).map(([packId, icons]) => (
           <div key={packId} className="mb-3">
             <div
@@ -254,6 +269,22 @@ export function IconPicker({
             </div>
           </div>
         ))}
+
+        {hasMore && (
+          <button
+            onClick={loadMore}
+            className="w-full py-2.5 rounded-lg text-xs font-medium mt-1"
+            style={{
+              backgroundColor: isDark ? "#2a2a2a" : "#f0f0f0",
+              color: BRAND,
+              border: `1px solid ${isDark ? "#444" : "#ddd"}`,
+              cursor: "pointer",
+            }}
+          >
+            Show more ({filtered.length - visibleCount} remaining)
+          </button>
+        )}
+
         {filtered.length === 0 && (
           <div className="text-center py-8 text-sm" style={{ color: "var(--fp-text-secondary)" }}>
             No icons match "{query}"

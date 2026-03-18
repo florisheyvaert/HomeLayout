@@ -29,23 +29,25 @@ export function CoverControl({ entityId, entity, hass, isDark }: CoverControlPro
     hass.callService("cover", "set_cover_tilt_position", { tilt_position: val }, { entity_id: entityId });
   };
 
-  const btnBase = "flex-1 py-3 rounded-lg text-sm font-medium transition-all";
+  const btnBase = "flex-1 py-1.5 rounded-md text-xs font-medium transition-all";
   const accent = getDomainColor("cover");
   const warning = colors.stateWarning;
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {/* Open / Stop / Close buttons */}
-      <div className="flex gap-1.5">
+      <div className="flex gap-1">
         <button
           onClick={handleOpen}
           className={btnBase}
           style={{
             backgroundColor: isOpen && !isMoving ? hexToRgba(accent, 0.15) : isDark ? "#333" : "#e8e8e8",
             color: isOpen && !isMoving ? accent : "var(--fp-text)",
+            border: "none",
+            cursor: "pointer",
           }}
         >
-          ▲ Open
+          Open
         </button>
         <button
           onClick={handleStop}
@@ -53,9 +55,11 @@ export function CoverControl({ entityId, entity, hass, isDark }: CoverControlPro
           style={{
             backgroundColor: isMoving ? hexToRgba(warning, 0.15) : isDark ? "#333" : "#e8e8e8",
             color: isMoving ? warning : "var(--fp-text)",
+            border: "none",
+            cursor: "pointer",
           }}
         >
-          ■ Stop
+          Stop
         </button>
         <button
           onClick={handleClose}
@@ -63,20 +67,22 @@ export function CoverControl({ entityId, entity, hass, isDark }: CoverControlPro
           style={{
             backgroundColor: state === "closed" ? hexToRgba(accent, 0.15) : isDark ? "#333" : "#e8e8e8",
             color: state === "closed" ? accent : "var(--fp-text)",
+            border: "none",
+            cursor: "pointer",
           }}
         >
-          ▼ Close
+          Close
         </button>
       </div>
 
       {/* Position slider */}
       {position !== undefined && (
         <div>
-          <div className="flex justify-between items-center mb-1.5">
-            <label className="text-xs" style={{ color: "var(--fp-text-secondary)" }}>
+          <div className="flex justify-between items-center mb-0.5">
+            <label className="text-[10px]" style={{ color: "var(--fp-text-secondary)" }}>
               Position
             </label>
-            <span className="text-xs font-medium">{position}%</span>
+            <span className="text-[10px] font-medium">{position}%</span>
           </div>
           <input
             type="range"
@@ -86,21 +92,17 @@ export function CoverControl({ entityId, entity, hass, isDark }: CoverControlPro
             onChange={(e) => handlePosition(Number(e.target.value))}
             className="w-full accent-blue-500"
           />
-          <div className="flex justify-between mt-0.5">
-            <span className="text-[10px]" style={{ color: "var(--fp-text-secondary)" }}>Closed</span>
-            <span className="text-[10px]" style={{ color: "var(--fp-text-secondary)" }}>Open</span>
-          </div>
         </div>
       )}
 
       {/* Tilt slider */}
       {tiltPosition !== undefined && (
         <div>
-          <div className="flex justify-between items-center mb-1.5">
-            <label className="text-xs" style={{ color: "var(--fp-text-secondary)" }}>
+          <div className="flex justify-between items-center mb-0.5">
+            <label className="text-[10px]" style={{ color: "var(--fp-text-secondary)" }}>
               Tilt
             </label>
-            <span className="text-xs font-medium">{tiltPosition}%</span>
+            <span className="text-[10px] font-medium">{tiltPosition}%</span>
           </div>
           <input
             type="range"
@@ -116,7 +118,7 @@ export function CoverControl({ entityId, entity, hass, isDark }: CoverControlPro
       {/* State indicator */}
       {isMoving && (
         <div
-          className="text-xs text-center py-1.5 rounded"
+          className="text-[10px] text-center py-1 rounded"
           style={{ backgroundColor: hexToRgba(warning, 0.1), color: warning }}
         >
           {state === "opening" ? "Opening..." : "Closing..."}

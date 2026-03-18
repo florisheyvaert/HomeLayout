@@ -49,29 +49,29 @@ export function SwitchControl({ entityId, entity, hass, isDark, domain }: Switch
   const accent = getDomainColor(domain);
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {/* Toggle */}
       <button
         onClick={handleToggle}
-        className="w-full rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 py-3"
+        className="w-full rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5 py-2"
         style={{
           backgroundColor: isActive ? hexToRgba(accent, 0.15) : isDark ? "#333" : "#e8e8e8",
           color: isActive ? accent : "var(--fp-text)",
           border: `1px solid ${isActive ? hexToRgba(accent, 0.2) : "transparent"}`,
         }}
       >
-        <DomIcon icon={isActive ? activeIcon : inactiveIcon} size={20} />
+        <DomIcon icon={isActive ? activeIcon : inactiveIcon} size={14} />
         {isActive ? activeLabel : inactiveLabel}
       </button>
 
       {/* Fan speed */}
       {domain === "fan" && isActive && fanSpeed !== undefined && (
         <div>
-          <div className="flex justify-between items-center mb-1.5">
-            <label className="text-xs" style={{ color: "var(--fp-text-secondary)" }}>
+          <div className="flex justify-between items-center mb-0.5">
+            <label className="text-[10px]" style={{ color: "var(--fp-text-secondary)" }}>
               Speed
             </label>
-            <span className="text-xs font-medium">{fanSpeed}%</span>
+            <span className="text-[10px] font-medium">{fanSpeed}%</span>
           </div>
           <input
             type="range"
@@ -89,11 +89,11 @@ export function SwitchControl({ entityId, entity, hass, isDark, domain }: Switch
       {/* Fan presets */}
       {domain === "fan" && isActive && fanPresets && fanPresets.length > 0 && (
         <div>
-          <label className="block text-xs mb-1.5" style={{ color: "var(--fp-text-secondary)" }}>
+          <label className="block text-[10px] mb-1" style={{ color: "var(--fp-text-secondary)" }}>
             Preset
           </label>
           <div
-            className="grid gap-1.5"
+            className="grid gap-1"
             style={{ gridTemplateColumns: `repeat(${Math.min(fanPresets.length, 3)}, 1fr)` }}
           >
             {fanPresets.map((preset) => (
@@ -102,11 +102,11 @@ export function SwitchControl({ entityId, entity, hass, isDark, domain }: Switch
                 onClick={() =>
                   hass.callService("fan", "set_preset_mode", { preset_mode: preset }, { entity_id: entityId })
                 }
-                className="rounded-lg text-xs font-medium capitalize"
+                className="rounded-md text-[10px] font-medium capitalize"
                 style={{
                   backgroundColor: currentPreset === preset ? hexToRgba(accent, 0.15) : isDark ? "#333" : "#e8e8e8",
                   color: currentPreset === preset ? accent : "var(--fp-text)",
-                  height: 40,
+                  height: 30,
                   border: "none",
                   cursor: "pointer",
                 }}
@@ -120,10 +120,10 @@ export function SwitchControl({ entityId, entity, hass, isDark, domain }: Switch
 
       {/* Media player info */}
       {domain === "media_player" && isActive && (
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           {Boolean(entity?.attributes?.media_title) && (
             <div
-              className="p-2 rounded text-xs"
+              className="p-1.5 rounded text-[10px]"
               style={{ backgroundColor: isDark ? "#333" : "#f0f0f0" }}
             >
               <div className="font-medium truncate">{String(entity?.attributes?.media_title)}</div>
@@ -136,11 +136,11 @@ export function SwitchControl({ entityId, entity, hass, isDark, domain }: Switch
           )}
           {entity?.attributes?.volume_level !== undefined && (
             <div>
-              <div className="flex justify-between items-center mb-1">
-                <label className="text-xs" style={{ color: "var(--fp-text-secondary)" }}>
+              <div className="flex justify-between items-center mb-0.5">
+                <label className="text-[10px]" style={{ color: "var(--fp-text-secondary)" }}>
                   Volume
                 </label>
-                <span className="text-xs font-medium">
+                <span className="text-[10px] font-medium">
                   {Math.round((entity.attributes.volume_level as number) * 100)}%
                 </span>
               </div>
