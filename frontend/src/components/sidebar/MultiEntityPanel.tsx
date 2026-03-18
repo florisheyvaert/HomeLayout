@@ -275,6 +275,7 @@ function EntityCard({
 
   const isToggleable = ["light", "switch", "fan", "lock", "media_player", "cover"].includes(domain);
   const isSensor = domain === "sensor" || domain === "binary_sensor";
+  const isCamera = domain === "camera";
 
   /* ─── Right-side action element ─── */
   const actionElement = isToggleable ? (
@@ -295,7 +296,23 @@ function EntityCard({
     <span className="text-xs font-medium tabular-nums flex-shrink-0">
       {attrs.current_temperature != null ? `${attrs.current_temperature}${climateUnit}` : state}
     </span>
+  ) : isCamera ? (
+    <span className="text-[10px] capitalize flex-shrink-0" style={{ color: "var(--fp-text-secondary)" }}>
+      {state}
+    </span>
   ) : null;
+
+  /* ─── Camera feed ─── */
+  const entityPicture = attrs.entity_picture as string | undefined;
+  const [cameraSrc, setCameraSrc] = useState("");
+  useEffect(() => {
+    if (!isCamera || !entityPicture) return;
+    const sep = entityPicture.includes("?") ? "&" : "?";
+    const update = () => setCameraSrc(`${entityPicture}${sep}ts=${Date.now()}`);
+    update();
+    const iv = setInterval(update, 10000);
+    return () => clearInterval(iv);
+  }, [isCamera, entityPicture]);
 
   /* ─── Has extra controls below? ─── */
   const hasSliders = lightSupportsBrightness || lightHasColorTemp
@@ -340,6 +357,23 @@ function EntityCard({
             </button>
           )}
         </div>
+
+        {/* Camera preview */}
+        {isCamera && cameraSrc && (
+          <div className="px-2.5 pb-2">
+            <img
+              src={cameraSrc}
+              style={{
+                width: "100%",
+                borderRadius: 6,
+                aspectRatio: "16 / 9",
+                objectFit: "cover",
+                display: "block",
+                backgroundColor: isDark ? "#1a1a1a" : "#e0e0e0",
+              }}
+            />
+          </div>
+        )}
 
         {/* Row 2: sliders */}
         {hasSliders && (

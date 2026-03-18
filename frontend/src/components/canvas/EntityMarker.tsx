@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from "react";
-import { Group, Circle, Text } from "react-konva";
+import { Group, Circle, Rect, Text, Image as KonvaImage } from "react-konva";
 import Konva from "konva";
 import type { EntityPlacement, HassEntity, CanvasTool } from "../../types";
 import { useThemeConfig, KonvaIcon, BRAND } from "../../theme";
+import { useCameraThumbnail } from "../../hooks/useCameraThumbnail";
 
 const DEFAULT_ICON_SIZE = 36;
 
@@ -90,6 +91,22 @@ export function EntityMarker({
   }
 
   const size = placement.icon_size ?? effectiveIconSize ?? DEFAULT_ICON_SIZE;
+
+  // Camera thumbnail support
+  const isCamera = domain === "camera";
+  const wantsPreview = isCamera && placement.show_camera_preview !== false;
+  const entityPicture = entity?.attributes?.entity_picture as string | undefined;
+  const { image: cameraImage, hasError: cameraError } = useCameraThumbnail(
+    entityPicture,
+    10000,
+    wantsPreview,
+  );
+  const showCameraThumbnail = wantsPreview && !!cameraImage && !cameraError;
+  // Camera thumbnail dimensions (landscape 16:10)
+  const camW = size * 2.2;
+  const camH = size * 1.4;
+  const camR = size * 0.12; // corner radius
+
   const [isDragging, setIsDragging] = useState(false);
   const groupRef = useRef<Konva.Group>(null);
   const prevStateRef = useRef(state);
@@ -227,23 +244,31 @@ export function EntityMarker({
       }}
       opacity={isDragging ? 0.7 : 1}
     >
-      {/* Invisible hit area — all visible shapes have listening={false},
-           so without this the entity would have zero hit area */}
-      <Circle
-        x={0}
-        y={0}
-        radius={size * 0.42}
-        hitFunc={(ctx, shape) => {
-          const r = (shape as unknown as { radius(): number }).radius();
-          ctx.beginPath();
-          ctx.arc(0, 0, r, 0, Math.PI * 2, true);
-          ctx.closePath();
-          ctx.fillStrokeShape(shape);
-        }}
-      />
+      {/* Invisible hit area */}
+      {showCameraThumbnail ? (
+        <Rect
+          x={-camW / 2}
+          y={-camH / 2}
+          width={camW}
+          height={camH}
+        />
+      ) : (
+        <Circle
+          x={0}
+          y={0}
+          radius={size * 0.42}
+          hitFunc={(ctx, shape) => {
+            const r = (shape as unknown as { radius(): number }).radius();
+            ctx.beginPath();
+            ctx.arc(0, 0, r, 0, Math.PI * 2, true);
+            ctx.closePath();
+            ctx.fillStrokeShape(shape);
+          }}
+        />
+      )}
 
       {/* Active glow */}
-      {isActive && !isDragging && (
+      {isActive && !isDragging && !showCameraThumbnail && (
         <Circle
           x={0}
           y={0}
@@ -255,7 +280,7 @@ export function EntityMarker({
       )}
 
       {/* Drop shadow while dragging */}
-      {isDragging && (
+      {isDragging && !showCameraThumbnail && (
         <Circle
           x={0}
           y={0}
@@ -266,7 +291,7 @@ export function EntityMarker({
       )}
 
       {/* Selection indicator */}
-      {isSelected && !isDragging && !isEditMode && (
+      {isSelected && !isDragging && !showCameraThumbnail && !isEditMode && (
         <Circle
           x={0}
           y={0}
@@ -277,7 +302,7 @@ export function EntityMarker({
           listening={false}
         />
       )}
-      {isSelected && !isDragging && isEditMode && (
+      {isSelected && !isDragging && !showCameraThumbnail && isEditMode && (
         <Circle
           x={0}
           y={0}
@@ -288,9 +313,68 @@ export function EntityMarker({
           listening={false}
         />
       )}
+      {/* Camera selection indicator (rectangle) */}
+      {isSelected && !isDragging && showCameraThumbnail && (
+        <Rect
+          x={-camW / 2 - 3}
+          y={-camH / 2 - 3}
+          width={camW + 6}
+          height={camH + 6}
+          cornerRadius={camR + 2}
+          stroke={accentColor}
+          strokeWidth={isEditMode ? 1.5 : 2}
+          dash={isEditMode ? [4, 3] : undefined}
+          fill={isEditMode ? undefined : `${accentColor}22`}
+          listening={false}
+        />
+      )}
 
       {/* Counter-rotate + scale-compensate so icons/labels stay readable */}
       <Group rotation={-stageRotation} scaleX={1 / stageScale} scaleY={1 / stageScale}>
+        {/* ─── Camera thumbnail (behind everything) ─── */}
+        {showCameraThumbnail && (
+          <Group>
+            <Group
+              clipFunc={(ctx: unknown) => {
+                const c = ctx as CanvasRenderingContext2D;
+                const x = -camW / 2;
+                const y = -camH / 2;
+                c.beginPath();
+                c.moveTo(x + camR, y);
+                c.lineTo(x + camW - camR, y);
+                c.arcTo(x + camW, y, x + camW, y + camR, camR);
+                c.lineTo(x + camW, y + camH - camR);
+                c.arcTo(x + camW, y + camH, x + camW - camR, y + camH, camR);
+                c.lineTo(x + camR, y + camH);
+                c.arcTo(x, y + camH, x, y + camH - camR, camR);
+                c.lineTo(x, y + camR);
+                c.arcTo(x, y, x + camR, y, camR);
+                c.closePath();
+              }}
+            >
+              <KonvaImage
+                x={-camW / 2}
+                y={-camH / 2}
+                width={camW}
+                height={camH}
+                image={cameraImage!}
+                listening={false}
+              />
+            </Group>
+            <Rect
+              x={-camW / 2}
+              y={-camH / 2}
+              width={camW}
+              height={camH}
+              cornerRadius={camR}
+              stroke={isDark ? "#555" : "#ccc"}
+              strokeWidth={1}
+              listening={false}
+            />
+          </Group>
+        )}
+
+        {/* ─── Icon / name / state (always rendered, overlays thumbnail) ─── */}
         {(() => {
           const showIcon = placement.show_icon !== false;
           const showName = placement.label_visible;
@@ -300,19 +384,19 @@ export function EntityMarker({
           const stateFontSize = Math.round(baseFontSize * 0.9);
           const lineGap = 2;
 
-          // Calculate text block height for vertical centering
           const textLines: number[] = [];
           if (showName) textLines.push(nameFontSize);
           if (showState) textLines.push(stateFontSize);
           const textBlockH = textLines.reduce((a, b) => a + b, 0) + Math.max(0, textLines.length - 1) * lineGap;
 
-          // Text positioning
-          const textX = showIcon ? size * 0.38 : 0;
-          const textTopY = -textBlockH / 2;
+          // When camera preview is showing, position text below thumbnail
+          const hasPreview = showCameraThumbnail;
+          const textX = hasPreview ? 0 : showIcon ? size * 0.38 : 0;
+          const textTopY = hasPreview ? camH / 2 + 4 : -textBlockH / 2;
 
-          // For icon-less centering: use a wide box with align center + offsetX half
           const centerW = 200;
           const centerOffX = centerW / 2;
+          const textCentered = hasPreview || !showIcon;
 
           return (
             <>
@@ -329,9 +413,9 @@ export function EntityMarker({
                 <Text
                   x={textX}
                   y={textTopY}
-                  width={showIcon ? undefined : centerW}
-                  align={showIcon ? "left" : "center"}
-                  offsetX={showIcon ? 0 : centerOffX}
+                  width={textCentered ? centerW : undefined}
+                  align={textCentered ? "center" : "left"}
+                  offsetX={textCentered ? centerOffX : 0}
                   text={friendlyName}
                   fontSize={nameFontSize}
                   fontFamily={fontFamily}
@@ -345,9 +429,9 @@ export function EntityMarker({
                 <Text
                   x={textX}
                   y={textTopY + (showName ? nameFontSize + lineGap : 0)}
-                  width={showIcon ? undefined : centerW}
-                  align={showIcon ? "left" : "center"}
-                  offsetX={showIcon ? 0 : centerOffX}
+                  width={textCentered ? centerW : undefined}
+                  align={textCentered ? "center" : "left"}
+                  offsetX={textCentered ? centerOffX : 0}
                   text={stateDisplay}
                   fontSize={stateFontSize}
                   fontFamily={fontFamily}

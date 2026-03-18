@@ -160,6 +160,21 @@ export function EntityControl({
             Show state
           </label>
 
+          {/* Camera preview toggle */}
+          {domain === "camera" && (
+            <label className="flex items-center gap-3 text-sm cursor-pointer py-1">
+              <input
+                type="checkbox"
+                style={{ width: 18, height: 18 }}
+                checked={placement.show_camera_preview !== false}
+                onChange={(e) =>
+                  onUpdate(placement.id, { show_camera_preview: e.target.checked })
+                }
+              />
+              Show preview
+            </label>
+          )}
+
           {/* Show attribute picker — only when show_state is enabled */}
           {placement.show_state && entity && (() => {
             const attrs = Object.keys(entity.attributes).filter(

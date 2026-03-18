@@ -95,6 +95,8 @@ export interface EntityPlacement {
   show_state: boolean;
   /** When set, shows this attribute value instead of the state */
   show_attribute?: string;
+  /** Camera entities: show live preview thumbnail (default true) */
+  show_camera_preview?: boolean;
 }
 
 export interface FavoriteItem {
