@@ -5,6 +5,7 @@ import { CoverControl } from "./CoverControl";
 import { ClimateControl } from "./ClimateControl";
 import { SwitchControl } from "./SwitchControl";
 import { SensorDisplay } from "./SensorDisplay";
+import { VacuumControl } from "./VacuumControl";
 
 interface EntityControlProps {
   placement: EntityPlacement;
@@ -42,7 +43,7 @@ export function EntityControl({
   const name = getFriendlyName(entity, placement.entity_id);
 
   const isActive =
-    state === "on" || state === "open" || state === "playing" || state === "unlocked";
+    state === "on" || state === "open" || state === "playing" || state === "unlocked" || state === "cleaning";
 
   const inputStyle = {
     backgroundColor: isDark ? "#333" : "#fff",
@@ -84,6 +85,10 @@ export function EntityControl({
 
           {(domain === "switch" || domain === "fan" || domain === "lock" || domain === "media_player") && (
             <SwitchControl entityId={placement.entity_id} entity={entity} hass={hass} isDark={isDark} domain={domain} />
+          )}
+
+          {domain === "vacuum" && (
+            <VacuumControl entityId={placement.entity_id} entity={entity} hass={hass} isDark={isDark} />
           )}
 
           {(domain === "sensor" || domain === "binary_sensor") && (
@@ -278,6 +283,84 @@ export function EntityControl({
             />
           </div>
           )}
+
+          {/* Vacuum map overlay */}
+          {domain === "vacuum" && (() => {
+            const vacuumPrefix = placement.entity_id.split(".")[1];
+            const imageEntities = Object.keys(hass.states).filter(
+              (eid) => eid.startsWith(`image.${vacuumPrefix}`)
+            );
+            if (imageEntities.length === 0) return null;
+            const hasMap = !!placement.vacuum_map_entity_id;
+
+            return (
+              <div className="space-y-2">
+                <hr style={{ borderColor: "var(--fp-border)" }} />
+                <h4 className="text-xs font-semibold uppercase" style={{ color: "var(--fp-text-secondary)" }}>
+                  Map Overlay
+                </h4>
+                <label className="flex items-center gap-3 text-sm cursor-pointer py-1">
+                  <input
+                    type="checkbox"
+                    style={{ width: 18, height: 18 }}
+                    checked={hasMap}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        onUpdate(placement.id, { vacuum_map_entity_id: imageEntities[0] });
+                      } else {
+                        onUpdate(placement.id, { vacuum_map_entity_id: undefined });
+                      }
+                    }}
+                  />
+                  Show map overlay
+                </label>
+
+                {hasMap && (
+                  <>
+                    {imageEntities.length > 1 && (
+                      <div>
+                        <label className="text-xs" style={{ color: "var(--fp-text-secondary)" }}>Map source</label>
+                        <select
+                          value={placement.vacuum_map_entity_id ?? ""}
+                          onChange={(e) => onUpdate(placement.id, { vacuum_map_entity_id: e.target.value || undefined })}
+                          className="w-full mt-1 px-3 py-2.5 rounded-lg text-sm border"
+                          style={inputStyle}
+                        >
+                          {imageEntities.map((eid) => (
+                            <option key={eid} value={eid}>{(hass.states[eid]?.attributes?.friendly_name as string) ?? eid}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-xs" style={{ color: "var(--fp-text-secondary)" }}>
+                          Opacity ({Math.round((placement.vacuum_map_transform?.opacity ?? 0.2) * 100)}%)
+                        </label>
+                      </div>
+                      <input
+                        type="range"
+                        min={10}
+                        max={100}
+                        value={Math.round((placement.vacuum_map_transform?.opacity ?? 0.2) * 100)}
+                        onChange={(e) => {
+                          const t = placement.vacuum_map_transform ?? { x: placement.x - 150, y: placement.y - 150, width: 300, height: 300, rotation: 0, opacity: 0.2 };
+                          onUpdate(placement.id, { vacuum_map_transform: { ...t, opacity: Number(e.target.value) / 100 } });
+                        }}
+                        className="w-full"
+                        style={inputStyle}
+                      />
+                    </div>
+
+                    <p className="text-xs" style={{ color: "var(--fp-text-secondary)" }}>
+                      Drag, resize, and rotate the map on the canvas
+                    </p>
+                  </>
+                )}
+              </div>
+            );
+          })()}
 
           {/* Remove */}
           <button

@@ -865,6 +865,7 @@ export function Layout({ hass }: LayoutProps) {
           onAddRoom={addRoom}
           onMoveRoom={handleMoveSelectedRooms}
           onMoveEntity={handleMoveSelectedEntities}
+          onUpdateEntity={updateEntity}
           onUpdateRoom={updateRoom}
           onDropEntity={handleDropEntity}
           selectedFurnitureIds={selectedFurnitureIds}

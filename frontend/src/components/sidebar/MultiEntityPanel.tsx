@@ -1,5 +1,5 @@
-import { useRef, useCallback, useState, useEffect } from "react";
-import type { HomeAssistant, HassEntity } from "../../types";
+import { useRef, useCallback, useState, useEffect, useMemo } from "react";
+import type { HomeAssistant, HassEntity, FloorConfig, EntityPlacement } from "../../types";
 import { useThemeConfig, DomIcon } from "../../theme";
 
 interface MultiEntityPanelProps {
@@ -9,6 +9,12 @@ interface MultiEntityPanelProps {
   isMobile?: boolean;
   onDeselectEntity: (entityId: string) => void;
   onDeselectAll: () => void;
+  /** Floor config for accessing entity placements (needed for vacuum map config) */
+  floor?: FloorConfig | null;
+  /** Update entity placement (needed for vacuum map config) */
+  onUpdateEntity?: (id: string, updates: Partial<EntityPlacement>) => void;
+  /** Current app mode */
+  isEditMode?: boolean;
 }
 
 function getDomain(entityId: string): string {
@@ -176,12 +182,18 @@ function EntityCard({
   isDark,
   isMobile,
   onDismiss,
+  floor,
+  onUpdateEntity,
+  isEditMode,
 }: {
   entityId: string;
   hass: HomeAssistant;
   isDark: boolean;
   isMobile: boolean;
   onDismiss: () => void;
+  floor?: FloorConfig | null;
+  onUpdateEntity?: (id: string, updates: Partial<EntityPlacement>) => void;
+  isEditMode?: boolean;
 }) {
   const { getDomainColor, resolveEntityIcon, colors } = useThemeConfig();
   const entity = hass.states[entityId];
@@ -222,6 +234,51 @@ function EntityCard({
 
   /* ─── Cover state ─── */
   const coverPosition = attrs.current_position as number | undefined;
+
+  /* ─── Vacuum state ─── */
+  const vacuumFeatures = (attrs.supported_features as number) ?? 0;
+  const vacuumBattery = attrs.battery_level as number | undefined;
+  const vacuumFanSpeed = attrs.fan_speed as string | undefined;
+  const vacuumFanSpeedList = attrs.fan_speed_list as string[] | undefined;
+  const vacuumIsCleaning = state === "cleaning";
+  const vacuumIsPaused = state === "paused";
+  const vacuumIsReturning = state === "returning";
+  const vacuumIsDocked = state === "docked";
+  const vacuumHasStart = vacuumFeatures & 8192;
+  const vacuumHasPause = vacuumFeatures & 4;
+  const vacuumHasStop = vacuumFeatures & 8;
+  const vacuumHasReturn = vacuumFeatures & 16;
+  const vacuumHasFanSpeed = vacuumFeatures & 32;
+  const vacuumHasLocate = vacuumFeatures & 512;
+  const vacuumStatus = attrs.status as string | undefined;
+
+  // Auto-detect related vacuum entities by prefix (e.g. "roborock_qrevo_5ae")
+  const vacuumPrefix = domain === "vacuum" ? entityId.split(".")[1] : "";
+  const vacuumRelated = useMemo(() => {
+    if (domain !== "vacuum") return { mopMode: null, mopIntensity: null, rooms: null, buttons: [] as { id: string; label: string }[] };
+    const states = hass.states;
+    const mopModeId = `select.${vacuumPrefix}_mop_mode`;
+    const mopIntensityId = `select.${vacuumPrefix}_mop_intensity`;
+    const currentRoomId = `sensor.${vacuumPrefix}_current_room`;
+
+    const mopMode = states[mopModeId] ?? null;
+    const mopIntensity = states[mopIntensityId] ?? null;
+    const rooms = states[currentRoomId] ?? null;
+
+    // Find button entities for this vacuum (quick actions like deep clean)
+    const buttons: { id: string; label: string }[] = [];
+    for (const eid of Object.keys(states)) {
+      if (eid.startsWith(`button.${vacuumPrefix}_`) && states[eid]) {
+        const friendly = (states[eid].attributes?.friendly_name as string) ?? eid.split(".")[1];
+        // Strip the vacuum name prefix from the label
+        const vacuumName = (entity?.attributes?.friendly_name as string) ?? "";
+        const label = friendly.startsWith(vacuumName) ? friendly.slice(vacuumName.length).trim() : friendly;
+        buttons.push({ id: eid, label });
+      }
+    }
+
+    return { mopMode, mopIntensity, rooms, buttons };
+  }, [domain, vacuumPrefix, hass.states, entity?.attributes?.friendly_name]);
 
   /* ─── Sensor state ─── */
   const sensorUnit = attrs.unit_of_measurement as string | undefined;
@@ -276,12 +333,18 @@ function EntityCard({
   };
   const [activeLabel, inactiveLabel] = toggleLabels[domain] ?? ["Off", "On"];
 
-  const isToggleable = ["light", "switch", "fan", "lock", "media_player", "cover", "vacuum"].includes(domain);
+  const isVacuum = domain === "vacuum";
+  const isToggleable = ["light", "switch", "fan", "lock", "media_player", "cover"].includes(domain);
   const isSensor = domain === "sensor" || domain === "binary_sensor";
   const isCamera = domain === "camera";
 
   /* ─── Right-side action element ─── */
-  const actionElement = isToggleable ? (
+  const actionElement = isVacuum ? (
+    <span className="text-[10px] font-medium capitalize flex-shrink-0" style={{ color: isActive ? domainColor : "var(--fp-text-secondary)" }}>
+      {vacuumStatus ?? state}
+      {vacuumBattery != null && <span style={{ color: "var(--fp-text-secondary)", marginLeft: 4 }}>{vacuumBattery}%</span>}
+    </span>
+  ) : isToggleable ? (
     <ToggleButton
       isActive={isActive}
       accentColor={domainColor}
@@ -320,7 +383,8 @@ function EntityCard({
   /* ─── Has extra controls below? ─── */
   const hasSliders = lightSupportsBrightness || lightHasColorTemp
     || (domain === "cover" && coverPosition !== undefined)
-    || (domain === "climate" && isActive && climateTarget !== undefined);
+    || (domain === "climate" && isActive && climateTarget !== undefined)
+    || isVacuum;
 
   const brightPct = Math.round((brightness / 255) * 100);
 
@@ -433,6 +497,314 @@ function EntityCard({
                 onChange={setClimateTemp}
                 suffix={`${tempValue}${climateUnit}`}
               />
+            )}
+
+            {/* ─── Vacuum controls ─── */}
+            {isVacuum && (
+              <div className="space-y-2 pt-1">
+                {/* Battery bar */}
+                {vacuumBattery != null && (
+                  <div>
+                    <div
+                      className="h-1.5 rounded-full overflow-hidden"
+                      style={{ backgroundColor: isDark ? "#444" : "#ddd" }}
+                    >
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{
+                          width: `${vacuumBattery}%`,
+                          backgroundColor: vacuumBattery > 20 ? domainColor : "#ef4444",
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Main action buttons */}
+                <div className="flex gap-1">
+                  {vacuumHasStart && !vacuumIsCleaning && !vacuumIsPaused && (
+                    <button
+                      onClick={() => hass.callService("vacuum", "start", {}, { entity_id: entityId })}
+                      className="flex-1 py-1.5 rounded-md text-[10px] font-medium flex items-center justify-center gap-1"
+                      style={{ backgroundColor: hexToRgba(domainColor, 0.15), color: domainColor, border: "none", cursor: "pointer" }}
+                    >
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21" /></svg>
+                      Start
+                    </button>
+                  )}
+                  {vacuumIsCleaning && vacuumHasPause && (
+                    <button
+                      onClick={() => hass.callService("vacuum", "pause", {}, { entity_id: entityId })}
+                      className="flex-1 py-1.5 rounded-md text-[10px] font-medium flex items-center justify-center gap-1"
+                      style={{ backgroundColor: hexToRgba(domainColor, 0.15), color: domainColor, border: "none", cursor: "pointer" }}
+                    >
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" /></svg>
+                      Pause
+                    </button>
+                  )}
+                  {vacuumIsPaused && vacuumHasStart && (
+                    <button
+                      onClick={() => hass.callService("vacuum", "start", {}, { entity_id: entityId })}
+                      className="flex-1 py-1.5 rounded-md text-[10px] font-medium flex items-center justify-center gap-1"
+                      style={{ backgroundColor: hexToRgba(domainColor, 0.15), color: domainColor, border: "none", cursor: "pointer" }}
+                    >
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21" /></svg>
+                      Resume
+                    </button>
+                  )}
+                  {vacuumHasStop && (vacuumIsCleaning || vacuumIsPaused) && (
+                    <button
+                      onClick={() => hass.callService("vacuum", "stop", {}, { entity_id: entityId })}
+                      className="flex-1 py-1.5 rounded-md text-[10px] font-medium flex items-center justify-center gap-1"
+                      style={{ backgroundColor: isDark ? "#333" : "#e8e8e8", color: "var(--fp-text)", border: "none", cursor: "pointer" }}
+                    >
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2" /></svg>
+                      Stop
+                    </button>
+                  )}
+                  {vacuumHasReturn && !vacuumIsDocked && !vacuumIsReturning && (
+                    <button
+                      onClick={() => hass.callService("vacuum", "return_to_base", {}, { entity_id: entityId })}
+                      className="flex-1 py-1.5 rounded-md text-[10px] font-medium flex items-center justify-center gap-1"
+                      style={{ backgroundColor: isDark ? "#333" : "#e8e8e8", color: "var(--fp-text)", border: "none", cursor: "pointer" }}
+                    >
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></svg>
+                      Dock
+                    </button>
+                  )}
+                  {vacuumIsReturning && (
+                    <span className="flex-1 text-[10px] text-center py-1.5 rounded-md" style={{ backgroundColor: hexToRgba(domainColor, 0.1), color: domainColor }}>
+                      Returning...
+                    </span>
+                  )}
+                  {vacuumHasLocate && (
+                    <button
+                      onClick={() => hass.callService("vacuum", "locate", {}, { entity_id: entityId })}
+                      className="py-1.5 px-2 rounded-md text-[10px] font-medium flex items-center justify-center"
+                      style={{ backgroundColor: isDark ? "#333" : "#e8e8e8", color: "var(--fp-text)", border: "none", cursor: "pointer" }}
+                      title="Locate"
+                    >
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" /></svg>
+                    </button>
+                  )}
+                </div>
+
+                {/* Fan speed / suction */}
+                {vacuumHasFanSpeed && vacuumFanSpeedList && vacuumFanSpeedList.length > 0 && (
+                  <div>
+                    <label className="block text-[10px] mb-1" style={{ color: "var(--fp-text-secondary)" }}>Suction</label>
+                    <div
+                      className="grid gap-1"
+                      style={{ gridTemplateColumns: `repeat(${Math.min(vacuumFanSpeedList.length, 4)}, 1fr)` }}
+                    >
+                      {vacuumFanSpeedList.map((speed) => (
+                        <button
+                          key={speed}
+                          onClick={() => hass.callService("vacuum", "set_fan_speed", { fan_speed: speed }, { entity_id: entityId })}
+                          className="rounded-md text-[10px] font-medium capitalize"
+                          style={{
+                            backgroundColor: vacuumFanSpeed === speed ? hexToRgba(domainColor, 0.15) : isDark ? "#333" : "#e8e8e8",
+                            color: vacuumFanSpeed === speed ? domainColor : "var(--fp-text)",
+                            height: 26,
+                            border: "none",
+                            cursor: "pointer",
+                          }}
+                        >
+                          {speed.replace(/_/g, " ")}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Mop mode */}
+                {vacuumRelated.mopMode && (() => {
+                  const opts = (vacuumRelated.mopMode.attributes?.options as string[]) ?? [];
+                  const current = vacuumRelated.mopMode.state;
+                  if (opts.length === 0) return null;
+                  return (
+                    <div>
+                      <label className="block text-[10px] mb-1" style={{ color: "var(--fp-text-secondary)" }}>Mop mode</label>
+                      <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${Math.min(opts.length, 3)}, 1fr)` }}>
+                        {opts.map((opt) => (
+                          <button
+                            key={opt}
+                            onClick={() => hass.callService("select", "select_option", { option: opt }, { entity_id: `select.${vacuumPrefix}_mop_mode` })}
+                            className="rounded-md text-[10px] font-medium capitalize"
+                            style={{
+                              backgroundColor: current === opt ? hexToRgba(domainColor, 0.15) : isDark ? "#333" : "#e8e8e8",
+                              color: current === opt ? domainColor : "var(--fp-text)",
+                              height: 26, border: "none", cursor: "pointer",
+                            }}
+                          >
+                            {opt.replace(/_/g, " ")}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Mop intensity */}
+                {vacuumRelated.mopIntensity && (() => {
+                  const opts = (vacuumRelated.mopIntensity.attributes?.options as string[]) ?? [];
+                  const current = vacuumRelated.mopIntensity.state;
+                  if (opts.length === 0) return null;
+                  return (
+                    <div>
+                      <label className="block text-[10px] mb-1" style={{ color: "var(--fp-text-secondary)" }}>Mop intensity</label>
+                      <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${Math.min(opts.length, 4)}, 1fr)` }}>
+                        {opts.map((opt) => (
+                          <button
+                            key={opt}
+                            onClick={() => hass.callService("select", "select_option", { option: opt }, { entity_id: `select.${vacuumPrefix}_mop_intensity` })}
+                            className="rounded-md text-[10px] font-medium capitalize"
+                            style={{
+                              backgroundColor: current === opt ? hexToRgba(domainColor, 0.15) : isDark ? "#333" : "#e8e8e8",
+                              color: current === opt ? domainColor : "var(--fp-text)",
+                              height: 26, border: "none", cursor: "pointer",
+                            }}
+                          >
+                            {opt.replace(/_/g, " ")}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Room selection */}
+                {vacuumRelated.rooms && (() => {
+                  const roomOpts = (vacuumRelated.rooms.attributes?.options as string[]) ?? [];
+                  if (roomOpts.length === 0) return null;
+                  return (
+                    <div>
+                      <label className="block text-[10px] mb-1" style={{ color: "var(--fp-text-secondary)" }}>Clean room</label>
+                      <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${Math.min(roomOpts.length + 1, 4)}, 1fr)` }}>
+                        <button
+                          onClick={() => hass.callService("vacuum", "start", {}, { entity_id: entityId })}
+                          className="rounded-md text-[10px] font-medium"
+                          style={{
+                            backgroundColor: isDark ? "#333" : "#e8e8e8",
+                            color: "var(--fp-text)",
+                            height: 26, border: "none", cursor: "pointer",
+                          }}
+                        >
+                          All
+                        </button>
+                        {roomOpts.map((room) => (
+                          <button
+                            key={room}
+                            onClick={() => hass.callService("vacuum", "send_command", { command: "app_segment_clean", params: [{ name: room }] }, { entity_id: entityId })}
+                            className="rounded-md text-[10px] font-medium"
+                            style={{
+                              backgroundColor: isDark ? "#333" : "#e8e8e8",
+                              color: "var(--fp-text)",
+                              height: 26, border: "none", cursor: "pointer",
+                            }}
+                          >
+                            {room}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Quick action buttons (deep clean, intensive sweep, etc.) */}
+                {vacuumRelated.buttons.length > 0 && (
+                  <div>
+                    <label className="block text-[10px] mb-1" style={{ color: "var(--fp-text-secondary)" }}>Quick actions</label>
+                    <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${Math.min(vacuumRelated.buttons.length, 3)}, 1fr)` }}>
+                      {vacuumRelated.buttons.map((btn) => (
+                        <button
+                          key={btn.id}
+                          onClick={() => hass.callService("button", "press", {}, { entity_id: btn.id })}
+                          className="rounded-md text-[10px] font-medium capitalize"
+                          style={{
+                            backgroundColor: isDark ? "#333" : "#e8e8e8",
+                            color: "var(--fp-text)",
+                            height: 26, border: "none", cursor: "pointer",
+                          }}
+                        >
+                          {btn.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Vacuum map overlay config — edit mode only */}
+                {isEditMode && floor && onUpdateEntity && (() => {
+                  const placement = floor.entities.find((e) => e.entity_id === entityId);
+                  if (!placement) return null;
+
+                  // Auto-detect image entities for this vacuum
+                  const imageEntities = Object.keys(hass.states).filter(
+                    (eid) => eid.startsWith(`image.${vacuumPrefix}`)
+                  );
+                  const hasMap = !!placement.vacuum_map_entity_id;
+
+                  return (
+                    <div>
+                      <label className="flex items-center gap-2 text-[10px] cursor-pointer py-0.5" style={{ color: "var(--fp-text-secondary)" }}>
+                        <input
+                          type="checkbox"
+                          style={{ width: 14, height: 14 }}
+                          checked={hasMap}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              const autoId = imageEntities[0];
+                              onUpdateEntity(placement.id, { vacuum_map_entity_id: autoId });
+                            } else {
+                              onUpdateEntity(placement.id, { vacuum_map_entity_id: undefined });
+                            }
+                          }}
+                        />
+                        Show map overlay
+                      </label>
+
+                      {hasMap && (
+                        <div className="space-y-1.5 mt-1">
+                          {/* Map source selector */}
+                          {imageEntities.length > 1 && (
+                            <select
+                              value={placement.vacuum_map_entity_id ?? ""}
+                              onChange={(e) => onUpdateEntity(placement.id, { vacuum_map_entity_id: e.target.value || undefined })}
+                              className="w-full px-2 py-1 rounded text-[10px] border"
+                              style={{ backgroundColor: isDark ? "#333" : "#fff", borderColor: isDark ? "#555" : "#d1d5db", color: "var(--fp-text)" }}
+                            >
+                              {imageEntities.map((eid) => (
+                                <option key={eid} value={eid}>{(hass.states[eid]?.attributes?.friendly_name as string) ?? eid}</option>
+                              ))}
+                            </select>
+                          )}
+
+                          {/* Opacity slider */}
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] flex-shrink-0" style={{ color: "var(--fp-text-secondary)" }}>Opacity</span>
+                            <input
+                              type="range"
+                              min={10}
+                              max={100}
+                              value={Math.round((placement.vacuum_map_transform?.opacity ?? 0.2) * 100)}
+                              onChange={(e) => {
+                                const t = placement.vacuum_map_transform ?? { x: placement.x - 150, y: placement.y - 150, width: 300, height: 300, rotation: 0, opacity: 0.2 };
+                                onUpdateEntity(placement.id, { vacuum_map_transform: { ...t, opacity: Number(e.target.value) / 100 } });
+                              }}
+                              className="flex-1"
+                              style={{ accentColor: domainColor, height: 4 }}
+                            />
+                            <span className="text-[10px] tabular-nums" style={{ width: 28, textAlign: "right" }}>
+                              {Math.round((placement.vacuum_map_transform?.opacity ?? 0.2) * 100)}%
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
             )}
           </div>
         )}
@@ -585,6 +957,9 @@ export function MultiEntityPanel({
   isMobile = false,
   onDeselectEntity,
   onDeselectAll,
+  floor,
+  onUpdateEntity,
+  isEditMode = false,
 }: MultiEntityPanelProps) {
   const domains = new Set(entityIds.map(getDomain));
   const isSingleDomain = domains.size === 1 && entityIds.length > 1;
@@ -614,6 +989,9 @@ export function MultiEntityPanel({
             isDark={isDark}
             isMobile={isMobile}
             onDismiss={() => onDeselectEntity(entityId)}
+            floor={floor}
+            onUpdateEntity={onUpdateEntity}
+            isEditMode={isEditMode}
           />
         ))}
       </div>

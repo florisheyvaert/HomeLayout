@@ -97,6 +97,17 @@ export interface EntityPlacement {
   show_attribute?: string;
   /** Camera entities: show live preview thumbnail (default true) */
   show_camera_preview?: boolean;
+  /** Vacuum map overlay: entity_id of the image/camera entity showing the vacuum map */
+  vacuum_map_entity_id?: string;
+  /** Vacuum map overlay: transform to align map image on canvas */
+  vacuum_map_transform?: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    rotation: number; // degrees
+    opacity: number;  // 0.1–0.8
+  };
 }
 
 export interface FavoriteItem {

@@ -227,7 +227,8 @@ export function EntityBrowser({ hass, isDark, isMobile, onTapPlace, onDragStartE
                           backgroundColor:
                             entity.state === "on" ||
                             entity.state === "open" ||
-                            entity.state === "playing"
+                            entity.state === "playing" ||
+                            entity.state === "cleaning"
                               ? getDomainColor(entity.entity_id.split(".")[0])
                               : colors.stateInactive,
                         }}

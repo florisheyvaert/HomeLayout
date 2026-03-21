@@ -6,6 +6,7 @@ import { RoomLayer } from "./RoomLayer";
 import { EntityLayer } from "./EntityLayer";
 import { FurnitureLayer } from "./FurnitureLayer";
 import { RoomBadgeLayer } from "./RoomBadgeLayer";
+import { VacuumMapOverlay } from "./VacuumMapOverlay";
 import { useThemeConfig, DomIcon, BRAND } from "../../theme";
 import type { FloorConfig, FloorBackground, Point, CanvasTool, AppMode, Room, HomeAssistant, FurniturePlacement, DeviceViewportPreset } from "../../types";
 import { getPreset } from "../../backgroundPresets";
@@ -23,6 +24,7 @@ interface HomeLayoutCanvasProps {
   onAddRoom: (points: Point[]) => Room | undefined;
   onMoveRoom: (id: string, dx: number, dy: number) => void;
   onMoveEntity: (id: string, x: number, y: number) => void;
+  onUpdateEntity: (id: string, updates: Partial<import("../../types").EntityPlacement>) => void;
   onUpdateRoom: (id: string, updates: Partial<Room>) => void;
   onDropEntity: (entityId: string, x: number, y: number) => void;
   selectedFurnitureIds: string[];
@@ -231,6 +233,7 @@ export const HomeLayoutCanvas = forwardRef<HomeLayoutCanvasHandle, HomeLayoutCan
       onAddRoom,
       onMoveRoom,
       onMoveEntity,
+      onUpdateEntity,
       onUpdateRoom,
       onDropEntity: _onDropEntity,
       selectedFurnitureIds,
@@ -972,6 +975,18 @@ export const HomeLayoutCanvas = forwardRef<HomeLayoutCanvasHandle, HomeLayoutCan
                   rooms={floor?.rooms ?? []}
                   hass={hass}
                   isDark={isDark}
+                  stageRotation={stageRotation}
+                  stageScale={stageScale}
+                />
+              </Layer>
+              {/* Vacuum map overlay — between rooms and furniture */}
+              <Layer listening={mode === "edit"}>
+                <VacuumMapOverlay
+                  vacuumEntities={(floor?.entities ?? []).filter((e) => e.entity_id.startsWith("vacuum."))}
+                  hass={hass}
+                  mode={mode}
+                  selectedEntityIds={selectedEntityIds}
+                  onUpdateEntity={onUpdateEntity}
                   stageRotation={stageRotation}
                   stageScale={stageScale}
                 />

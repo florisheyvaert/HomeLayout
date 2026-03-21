@@ -216,6 +216,8 @@ export function ControlPanel({
           isMobile={isMobile}
           onDeselectEntity={onDeselectSummaryEntity}
           onDeselectAll={onClearSummaryDomain}
+          floor={floor}
+          onUpdateEntity={onUpdateEntity}
         />
       );
     }
@@ -242,6 +244,8 @@ export function ControlPanel({
             isMobile={isMobile}
             onDeselectEntity={onDeselectEntity}
             onDeselectAll={onDeselectAll}
+            floor={floor}
+            onUpdateEntity={onUpdateEntity}
           />
         );
       }
