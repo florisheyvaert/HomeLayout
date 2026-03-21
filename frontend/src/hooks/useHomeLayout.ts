@@ -13,6 +13,7 @@ import type {
   HaFloor,
   HaArea,
   HaEntityRegistryEntry,
+  HaCategory,
 } from "../types";
 import { getCatalogEntry } from "../furniture/catalog";
 
@@ -95,6 +96,7 @@ export function useHomeLayout(hass: HomeAssistant | null) {
   const [haFloors, setHaFloors] = useState<HaFloor[]>([]);
   const [haAreas, setHaAreas] = useState<HaArea[]>([]);
   const [entityRegistry, setEntityRegistry] = useState<HaEntityRegistryEntry[]>([]);
+  const [automationCategories, setAutomationCategories] = useState<HaCategory[]>([]);
   const [loaded, setLoaded] = useState(false);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -120,15 +122,37 @@ export function useHomeLayout(hass: HomeAssistant | null) {
       hass.callWS<HaFloor[]>({ type: "config/floor_registry/list" }),
       hass.callWS<HaArea[]>({ type: "config/area_registry/list" }),
       hass.callWS<HaEntityRegistryEntry[]>({ type: "config/entity_registry/list" }).catch(() => []),
+      Promise.all([
+        hass.callWS<HaCategory[]>({ type: "config/category_registry/list", scope: "automation" }).catch(() => []),
+        hass.callWS<HaCategory[]>({ type: "config/category_registry/list", scope: "input_number" }).catch(() => []),
+        hass.callWS<HaCategory[]>({ type: "config/category_registry/list", scope: "input_boolean" }).catch(() => []),
+        hass.callWS<HaCategory[]>({ type: "config/category_registry/list", scope: "input_datetime" }).catch(() => []),
+        hass.callWS<HaCategory[]>({ type: "config/category_registry/list", scope: "input_text" }).catch(() => []),
+        hass.callWS<HaCategory[]>({ type: "config/category_registry/list", scope: "input_select" }).catch(() => []),
+      ]).then((results) => {
+        // Merge all categories, deduplicate by name
+        const allCats: HaCategory[] = [];
+        const seen = new Set<string>();
+        for (const list of results) {
+          for (const cat of list) {
+            if (!seen.has(cat.name)) {
+              seen.add(cat.name);
+              allCats.push(cat);
+            }
+          }
+        }
+        return allCats;
+      }),
       import.meta.env.DEV
         ? Promise.resolve(loadFromLocalStorage() ?? DEFAULT_STORE)
         : hass
             .callWS<HomeLayoutStore>({ type: "homelayout/config/get" })
             .catch(() => loadFromLocalStorage() ?? DEFAULT_STORE),
-    ]).then(([floors, areas, entityReg, savedStore]) => {
+    ]).then(([floors, areas, entityReg, categories, savedStore]) => {
       setHaFloors(floors);
       setHaAreas(areas);
       setEntityRegistry(entityReg);
+      setAutomationCategories(categories);
 
       const sortedFloors = [...floors].sort(
         (a, b) => (a.level ?? 0) - (b.level ?? 0)
@@ -548,5 +572,7 @@ export function useHomeLayout(hass: HomeAssistant | null) {
     redo,
     canUndo,
     canRedo,
+    entityRegistry,
+    automationCategories,
   };
 }

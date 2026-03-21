@@ -170,6 +170,8 @@ export function Layout({ hass }: LayoutProps) {
     redo,
     canUndo,
     canRedo,
+    entityRegistry,
+    automationCategories,
   } = useHomeLayout(hass);
 
   const isMobile = useIsMobile();
@@ -202,6 +204,7 @@ export function Layout({ hass }: LayoutProps) {
   const effectiveGridSize = GRID_SIZES[gridMode];
   const gridEnabled = gridMode !== "none";
   const [showAppearance, setShowAppearance] = useState(false);
+  const [showAutomations, setShowAutomations] = useState(false);
   const [showQuickAccess, setShowQuickAccess] = useState(false);
   const [showShapeMenu, setShowShapeMenu] = useState(false);
   const [isDefaultView, setIsDefaultView] = useState(true);
@@ -288,6 +291,10 @@ export function Layout({ hass }: LayoutProps) {
 
   const handlePanelClose = useCallback(() => {
     // Pop the topmost panel layer instead of clearing everything
+    if (showAutomations) {
+      setShowAutomations(false);
+      return;
+    }
     if (showAppearance) {
       setShowAppearance(false);
       return;
@@ -304,7 +311,7 @@ export function Layout({ hass }: LayoutProps) {
     if (activeTool === "place" || activeTool === "furniture") {
       selectTool("select");
     }
-  }, [activeTool, selectTool, showAppearance, showQuickAccess]);
+  }, [activeTool, selectTool, showAutomations, showAppearance, showQuickAccess]);
 
   const handleMarqueeSelect = useCallback(
     (roomIds: string[], entityIds: string[], additive: boolean, furnitureIds?: string[]) => {
@@ -516,6 +523,7 @@ export function Layout({ hass }: LayoutProps) {
         setSelectedFurnitureIds([]);
         setSummaryDomainEntityIds(null);
         setShowAppearance(false);
+        setShowAutomations(false);
         setShowQuickAccess(false);
         setShowShapeMenu(false);
       }
@@ -721,7 +729,9 @@ export function Layout({ hass }: LayoutProps) {
   const viewHasEntitySelection = mode === "view" && selectedEntityIds.length > 0;
   const viewHasSelection = mode === "view" && (hasEntity || multiCount > 1 || viewHasSummaryDomain);
   const viewShowQuickAccess = mode === "view" && !viewHasSelection && showQuickAccess;
-  const sheetSnap: SnapPoint = showAppearance
+  const sheetSnap: SnapPoint = showAutomations
+    ? "half"
+    : showAppearance
     ? "half"
     : viewHasEntitySelection || viewHasSummaryDomain
       ? "half"
@@ -739,6 +749,7 @@ export function Layout({ hass }: LayoutProps) {
 
   // Has content to show in ControlPanel?
   const panelHasContent =
+    showAutomations ||
     showAppearance ||
     viewHasEntitySelection ||
     viewHasSelection ||
@@ -933,27 +944,49 @@ export function Layout({ hass }: LayoutProps) {
               {mode === "edit" ? "\u2713" : "\u270E"}
             </button>
             {mode === "view" && (
-              <button
-                onClick={() => {
-                  setShowQuickAccess((s) => !s);
-                  setShowAppearance(false);
-                }}
-                title="Quick Access"
-                style={{
-                  ...fabBase(isDark),
-                  width: 40,
-                  height: 40,
-                  fontSize: 16,
-                  backgroundColor: showQuickAccess
-                    ? BRAND
-                    : fabBase(isDark).backgroundColor,
-                  color: showQuickAccess ? "#fff" : fabBase(isDark).color,
-                }}
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.27 5.82 22 7 14.14l-5-4.87 6.91-1.01z" />
-                </svg>
-              </button>
+              <>
+                <button
+                  onClick={() => {
+                    setShowQuickAccess((s) => !s);
+                    setShowAppearance(false);
+                  }}
+                  title="Quick Access"
+                  style={{
+                    ...fabBase(isDark),
+                    width: 40,
+                    height: 40,
+                    fontSize: 16,
+                    backgroundColor: showQuickAccess
+                      ? BRAND
+                      : fabBase(isDark).backgroundColor,
+                    color: showQuickAccess ? "#fff" : fabBase(isDark).color,
+                  }}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.27 5.82 22 7 14.14l-5-4.87 6.91-1.01z" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => setShowAutomations((s) => !s)}
+                  title="Automations"
+                  style={{
+                    ...fabBase(isDark),
+                    width: 40,
+                    height: 40,
+                    fontSize: 16,
+                    backgroundColor: showAutomations
+                      ? BRAND
+                      : fabBase(isDark).backgroundColor,
+                    color: showAutomations ? "#fff" : fabBase(isDark).color,
+                  }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="3" width="20" height="14" rx="2" />
+                    <path d="M8 21h8M12 17v4" />
+                    <path d="M7 9l3 3-3 3M13 15h4" />
+                  </svg>
+                </button>
+              </>
             )}
           </div>
         </div>
@@ -1457,6 +1490,9 @@ export function Layout({ hass }: LayoutProps) {
                 onDeselectAll={handleDeselectAllEntities}
                 onDeselectSummaryEntity={handleDeselectSummaryEntity}
                 onClearSummaryDomain={handleClearSummaryDomain}
+                showAutomations={showAutomations}
+                entityRegistry={entityRegistry}
+                automationCategories={automationCategories}
               />
             )}
           </BottomSheet>
@@ -1500,6 +1536,9 @@ export function Layout({ hass }: LayoutProps) {
                 onDeselectAll={handleDeselectAllEntities}
                 onDeselectSummaryEntity={handleDeselectSummaryEntity}
                 onClearSummaryDomain={handleClearSummaryDomain}
+                showAutomations={showAutomations}
+                entityRegistry={entityRegistry}
+                automationCategories={automationCategories}
               />
             )}
           </SideDrawer>

@@ -10,6 +10,7 @@ import type {
   CanvasTool,
   GlobalSettings,
   HaEntityRegistryEntry,
+  HaCategory,
   FavoriteItem,
   FloorBackground,
 } from "../../types";
@@ -23,6 +24,7 @@ import { FavoritesPanel } from "./FavoritesPanel";
 import { FavoriteEditor } from "./FavoriteEditor";
 import { FurnitureBrowser } from "./FurnitureBrowser";
 import { FurnitureControl } from "./FurnitureControl";
+import { AutomationsPanel } from "./AutomationsPanel";
 
 interface ControlPanelProps {
   mode: AppMode;
@@ -67,6 +69,12 @@ interface ControlPanelProps {
   onDeselectSummaryEntity?: (entityId: string) => void;
   /** Clear all summary domain selections */
   onClearSummaryDomain?: () => void;
+  /** Show automations panel */
+  showAutomations?: boolean;
+  /** Entity registry for automations grouping */
+  entityRegistry?: HaEntityRegistryEntry[];
+  /** Automation categories */
+  automationCategories?: HaCategory[];
 }
 
 export function ControlPanel({
@@ -107,6 +115,9 @@ export function ControlPanel({
   onDeselectAll,
   onDeselectSummaryEntity,
   onClearSummaryDomain,
+  showAutomations,
+  entityRegistry,
+  automationCategories,
 }: ControlPanelProps) {
   const [showFavoriteEditor, setShowFavoriteEditor] = useState(false);
 
@@ -165,6 +176,18 @@ export function ControlPanel({
       {children}
     </div>
   );
+
+  // Automations panel (topmost when active)
+  if (showAutomations && entityRegistry && automationCategories) {
+    return wrap(
+      <AutomationsPanel
+        hass={hass}
+        isDark={isDark}
+        entityRegistry={entityRegistry}
+        automationCategories={automationCategories}
+      />
+    );
+  }
 
   // Appearance settings panel (always on top when active)
   if (showAppearance) {

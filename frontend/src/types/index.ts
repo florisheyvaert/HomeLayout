@@ -154,6 +154,13 @@ export interface HaEntityRegistryEntry {
   platform: string;
   area_id: string | null;
   device_id: string | null;
+  /** Category IDs keyed by scope (e.g. { automation: "cat_id_123" }) */
+  categories?: Record<string, string>;
+}
+
+export interface HaCategory {
+  category_id: string;
+  name: string;
 }
 
 export type FurnitureType =
