@@ -1,3 +1,4 @@
+import json
 import os
 
 from homeassistant.components import frontend, panel_custom
@@ -14,6 +15,11 @@ CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 PANEL_URL = f"/{DOMAIN}_panel"
 PANEL_FRONTEND_DIR = os.path.join(os.path.dirname(__file__), "frontend")
+
+# Read version from manifest.json for cache busting
+_MANIFEST = os.path.join(os.path.dirname(__file__), "manifest.json")
+with open(_MANIFEST, encoding="utf-8") as _f:
+    _VERSION = json.load(_f).get("version", "0")
 
 
 async def _set_default_panel(hass: HomeAssistant, panel_name: str) -> None:
@@ -42,7 +48,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         frontend_url_path=DOMAIN,
         sidebar_title="HomeLayout",
         sidebar_icon="mdi:floor-plan",
-        module_url=f"{PANEL_URL}/homelayout.js",
+        module_url=f"{PANEL_URL}/homelayout.js?v={_VERSION}",
         embed_iframe=False,
         require_admin=False,
         config={},
