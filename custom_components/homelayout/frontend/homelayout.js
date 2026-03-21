@@ -23472,7 +23472,8 @@ const pO = [
   "fan",
   "camera",
   "media_player",
-  "lock"
+  "lock",
+  "vacuum"
 ];
 function mO({
   v: t,
@@ -24093,7 +24094,8 @@ const $6 = [
   "fan",
   "camera",
   "media_player",
-  "lock"
+  "lock",
+  "vacuum"
 ], xO = {
   light: "Lights",
   switch: "Switches",
@@ -24104,7 +24106,8 @@ const $6 = [
   fan: "Fans",
   camera: "Cameras",
   media_player: "Media Players",
-  lock: "Locks"
+  lock: "Locks",
+  vacuum: "Vacuums"
 };
 function Y4(t) {
   var e;
@@ -25470,7 +25473,7 @@ function jO({
   isMobile: r,
   onDismiss: a
 }) {
-  const { getDomainColor: o, resolveEntityIcon: s, colors: c } = Ae(), d = e.states[t], p = A7(t), v = EO(d, t), x = (d == null ? void 0 : d.state) ?? "unknown", y = (d == null ? void 0 : d.attributes) ?? {}, S = o(p), C = x === "on" || x === "open" || x === "playing" || x === "unlocked" || p === "climate" && !["off", "unavailable", "unknown"].includes(x), _ = p === "light" && Array.isArray(y.supported_color_modes) ? y.supported_color_modes : [], H = p === "light" && _.length > 0, A = p === "light" && _.includes("color_temp"), [L, g] = D.useState(y.brightness ?? 0), [M, k] = D.useState(y.color_temp ?? 300);
+  const { getDomainColor: o, resolveEntityIcon: s, colors: c } = Ae(), d = e.states[t], p = A7(t), v = EO(d, t), x = (d == null ? void 0 : d.state) ?? "unknown", y = (d == null ? void 0 : d.attributes) ?? {}, S = o(p), C = x === "on" || x === "open" || x === "playing" || x === "unlocked" || x === "cleaning" || p === "climate" && !["off", "unavailable", "unknown"].includes(x), _ = p === "light" && Array.isArray(y.supported_color_modes) ? y.supported_color_modes : [], H = p === "light" && _.length > 0, A = p === "light" && _.includes("color_temp"), [L, g] = D.useState(y.brightness ?? 0), [M, k] = D.useState(y.color_temp ?? 300);
   D.useEffect(() => {
     g(y.brightness ?? 0);
   }, [y.brightness]), D.useEffect(() => {
@@ -25481,7 +25484,7 @@ function jO({
     T !== void 0 && Z(T);
   }, [T]);
   const $ = y.current_position, r1 = y.unit_of_measurement, Y = parseFloat(x), g1 = !isNaN(Y), f1 = () => {
-    p === "light" || p === "switch" || p === "fan" ? e.callService(p, C ? "turn_off" : "turn_on", {}, { entity_id: t }) : p === "lock" ? e.callService("lock", C ? "lock" : "unlock", {}, { entity_id: t }) : p === "media_player" ? e.callService("media_player", C ? "media_pause" : "media_play", {}, { entity_id: t }) : p === "cover" && e.callService("cover", C ? "close_cover" : "open_cover", {}, { entity_id: t });
+    p === "light" || p === "switch" || p === "fan" ? e.callService(p, C ? "turn_off" : "turn_on", {}, { entity_id: t }) : p === "vacuum" ? e.callService("vacuum", C ? "return_to_base" : "start", {}, { entity_id: t }) : p === "lock" ? e.callService("lock", C ? "lock" : "unlock", {}, { entity_id: t }) : p === "media_player" ? e.callService("media_player", C ? "media_pause" : "media_play", {}, { entity_id: t }) : p === "cover" && e.callService("cover", C ? "close_cover" : "open_cover", {}, { entity_id: t });
   }, K = (C1) => {
     g(C1), e.callService("light", "turn_on", { brightness: C1 }, { entity_id: t });
   }, U = (C1) => {
@@ -25494,10 +25497,11 @@ function jO({
     light: ["Off", "On"],
     switch: ["Off", "On"],
     fan: ["Off", "On"],
+    vacuum: ["Dock", "Start"],
     lock: ["Locked", "Unlocked"],
     media_player: ["Paused", "Playing"],
     cover: ["Closed", "Open"]
-  }, [u1, h1] = y1[p] ?? ["Off", "On"], L1 = ["light", "switch", "fan", "lock", "media_player", "cover"].includes(p), I = p === "sensor" || p === "binary_sensor", Q = p === "camera", e1 = L1 ? /* @__PURE__ */ h.jsx(
+  }, [u1, h1] = y1[p] ?? ["Off", "On"], L1 = ["light", "switch", "fan", "lock", "media_player", "cover", "vacuum"].includes(p), I = p === "sensor" || p === "binary_sensor", Q = p === "camera", e1 = L1 ? /* @__PURE__ */ h.jsx(
     TO,
     {
       isActive: C,
@@ -25648,7 +25652,7 @@ function RO({
   hass: e,
   isDark: n
 }) {
-  const { getDomainColor: r } = Ae(), a = A7(t[0]), o = r(a), c = ["light", "switch", "fan", "media_player", "lock", "cover"].includes(a), d = a === "light" ? (() => {
+  const { getDomainColor: r } = Ae(), a = A7(t[0]), o = r(a), c = ["light", "switch", "fan", "media_player", "lock", "cover", "vacuum"].includes(a), d = a === "light" ? (() => {
     var H, A;
     let C = 0, _ = 0;
     for (const L of t) {
@@ -25666,10 +25670,10 @@ function RO({
     return _ > 0 ? Math.round(C / _) : 50;
   })() : 50, v = () => {
     for (const C of t)
-      a === "cover" ? e.callService("cover", "open_cover", {}, { entity_id: C }) : a === "lock" ? e.callService("lock", "unlock", {}, { entity_id: C }) : e.callService(a, "turn_on", {}, { entity_id: C });
+      a === "cover" ? e.callService("cover", "open_cover", {}, { entity_id: C }) : a === "lock" ? e.callService("lock", "unlock", {}, { entity_id: C }) : a === "vacuum" ? e.callService("vacuum", "start", {}, { entity_id: C }) : e.callService(a, "turn_on", {}, { entity_id: C });
   }, x = () => {
     for (const C of t)
-      a === "cover" ? e.callService("cover", "close_cover", {}, { entity_id: C }) : a === "lock" ? e.callService("lock", "lock", {}, { entity_id: C }) : e.callService(a, "turn_off", {}, { entity_id: C });
+      a === "cover" ? e.callService("cover", "close_cover", {}, { entity_id: C }) : a === "lock" ? e.callService("lock", "lock", {}, { entity_id: C }) : a === "vacuum" ? e.callService("vacuum", "return_to_base", {}, { entity_id: C }) : e.callService(a, "turn_off", {}, { entity_id: C });
   }, y = (C) => {
     for (const _ of t)
       e.callService("light", "turn_on", { brightness: C }, { entity_id: _ });
@@ -26881,6 +26885,7 @@ const Q6 = [
   "camera",
   "media_player",
   "lock",
+  "vacuum",
   "scene",
   "script",
   "automation",

@@ -46,7 +46,7 @@ function generateId() {
 
 const SUPPORTED_DOMAINS = [
   "light", "switch", "cover", "sensor", "binary_sensor",
-  "climate", "fan", "camera", "media_player", "lock",
+  "climate", "fan", "camera", "media_player", "lock", "vacuum",
 ];
 
 function LabelPositionPicker({

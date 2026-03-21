@@ -191,7 +191,7 @@ function EntityCard({
   const attrs = entity?.attributes ?? {};
   const domainColor = getDomainColor(domain);
   const isActive =
-    state === "on" || state === "open" || state === "playing" || state === "unlocked"
+    state === "on" || state === "open" || state === "playing" || state === "unlocked" || state === "cleaning"
     || (domain === "climate" && !["off", "unavailable", "unknown"].includes(state));
 
   /* ─── Light state ─── */
@@ -232,6 +232,8 @@ function EntityCard({
   const toggle = () => {
     if (domain === "light" || domain === "switch" || domain === "fan")
       hass.callService(domain, isActive ? "turn_off" : "turn_on", {}, { entity_id: entityId });
+    else if (domain === "vacuum")
+      hass.callService("vacuum", isActive ? "return_to_base" : "start", {}, { entity_id: entityId });
     else if (domain === "lock")
       hass.callService("lock", isActive ? "lock" : "unlock", {}, { entity_id: entityId });
     else if (domain === "media_player")
@@ -267,13 +269,14 @@ function EntityCard({
     light: ["Off", "On"],
     switch: ["Off", "On"],
     fan: ["Off", "On"],
+    vacuum: ["Dock", "Start"],
     lock: ["Locked", "Unlocked"],
     media_player: ["Paused", "Playing"],
     cover: ["Closed", "Open"],
   };
   const [activeLabel, inactiveLabel] = toggleLabels[domain] ?? ["Off", "On"];
 
-  const isToggleable = ["light", "switch", "fan", "lock", "media_player", "cover"].includes(domain);
+  const isToggleable = ["light", "switch", "fan", "lock", "media_player", "cover", "vacuum"].includes(domain);
   const isSensor = domain === "sensor" || domain === "binary_sensor";
   const isCamera = domain === "camera";
 
@@ -453,7 +456,7 @@ function SingleDomainBulk({
   const domain = getDomain(entityIds[0]);
   const domainColor = getDomainColor(domain);
 
-  const toggleableDomains = ["light", "switch", "fan", "media_player", "lock", "cover"];
+  const toggleableDomains = ["light", "switch", "fan", "media_player", "lock", "cover", "vacuum"];
   const isToggleable = toggleableDomains.includes(domain);
 
   // Compute average brightness / cover position from actual HA state
@@ -479,6 +482,7 @@ function SingleDomainBulk({
     for (const eid of entityIds) {
       if (domain === "cover") hass.callService("cover", "open_cover", {}, { entity_id: eid });
       else if (domain === "lock") hass.callService("lock", "unlock", {}, { entity_id: eid });
+      else if (domain === "vacuum") hass.callService("vacuum", "start", {}, { entity_id: eid });
       else hass.callService(domain, "turn_on", {}, { entity_id: eid });
     }
   };
@@ -487,6 +491,7 @@ function SingleDomainBulk({
     for (const eid of entityIds) {
       if (domain === "cover") hass.callService("cover", "close_cover", {}, { entity_id: eid });
       else if (domain === "lock") hass.callService("lock", "lock", {}, { entity_id: eid });
+      else if (domain === "vacuum") hass.callService("vacuum", "return_to_base", {}, { entity_id: eid });
       else hass.callService(domain, "turn_off", {}, { entity_id: eid });
     }
   };

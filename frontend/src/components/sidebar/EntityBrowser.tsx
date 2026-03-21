@@ -21,6 +21,7 @@ const SUPPORTED_DOMAINS = [
   "camera",
   "media_player",
   "lock",
+  "vacuum",
 ];
 
 const DOMAIN_LABELS: Record<string, string> = {
@@ -34,6 +35,7 @@ const DOMAIN_LABELS: Record<string, string> = {
   camera: "Cameras",
   media_player: "Media Players",
   lock: "Locks",
+  vacuum: "Vacuums",
 };
 
 function getFriendlyName(entity: HassEntity): string {

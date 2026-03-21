@@ -21,6 +21,7 @@ const SUPPORTED_DOMAINS = [
   "camera",
   "media_player",
   "lock",
+  "vacuum",
   "scene",
   "script",
   "automation",
