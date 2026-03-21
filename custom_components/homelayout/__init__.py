@@ -39,7 +39,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     async_register_commands(hass)
 
     await hass.http.async_register_static_paths(
-        [StaticPathConfig(PANEL_URL, PANEL_FRONTEND_DIR, cache_headers=True)]
+        [StaticPathConfig(PANEL_URL, PANEL_FRONTEND_DIR, cache_headers=False)]
     )
 
     await panel_custom.async_register_panel(
